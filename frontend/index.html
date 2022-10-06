@@ -9,6 +9,11 @@
   <!-- You can add your styles and scripts here -->
   <link rel="stylesheet" type="text/css" media="screen" href="styles/provided.css" />
   <script type="module" src="src/helpers.js"></script>
+  <style>
+    .signup-bubble {
+      display: none;
+    }
+  </style>
 </head>
 
 <body>
@@ -18,11 +23,52 @@
   </header>
   <main role="main">
     <!-- app goes here -->
+    <div class="login-bubble">
+      <form name="login_form">
+        <h3>Login</h3>
+        <label for="email-li">Email</label><br>
+        <input type="text" id="email-li" name="email_li">
+        <br><br>
+        <label for="password-li">Password</label><br>
+        <input type="password" id="password-li" name="password_li">
+        <br><br>
+      </form>
+        <button name="login-button" id="login-button">LOGIN</button>
+        <br><br>
+        <p>
+          Need an account?
+          <a href="#" class="signup-hyperlink">SIGN UP</a>
+        </p>
+    </div>
+    <div class="signup-bubble">
+      <form name="signup_form">
+        <h3>Sign up</h3>
+        <label for="email-su">Email</label><br>
+        <input type="text" id="email-su" name="email_su">
+        <br><br>
+        <label for="name-su">Name</label><br>
+        <input type="text" id="name-su" name="name_su">
+        <br><br>
+        <label for="password-su">Password</label><br>
+        <input type="password" id="password-su" name="password_su">
+        <br><br>
+        <label for="password-conf-su">Confirm Password</label><br>
+        <input type="password" id="password-conf-su" name="password_conf_su">
+      </form>
+        <br><br>
+        <button name="signup-button" id="signup-button">SIGN UP</button>
+        <br><br>
+        <p>
+          Already a user? 
+          <a href="#" class="login-hyperlink">LOGIN</a>
+        </p>
+    </div>
   </main>
   <footer>
     <p>&copy; Slackr</p>
   </footer>
   <script type="module" src="src/main.js"></script>
+  <script type="module" src="./src/auth.js"></script>
 </body>
 
 </html>
