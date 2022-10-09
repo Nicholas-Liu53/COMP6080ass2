@@ -3,7 +3,46 @@
 html, body {
     margin: 0;
     padding: 0;
-    background-color: #fafafa;
+    background-color: #dcb7ff;
     height: 100%;
     font-family: -apple-system, 'Open Sans', 'Helvetica Neue', sans-serif;
+    display: flex;
+    flex-direction: column;
+}
+
+.login-bubble {
+    background-color: white;
+    margin-left: 20rem;
+    margin-right: 20rem;
+    padding-top: 0.5rem;    
+    padding-bottom: 0.5rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    border-radius: 1rem;
+}
+
+.signup-bubble {
+    background-color: white;
+    margin-left: 20rem;
+    margin-right: 20rem;
+    padding-top: 0.5rem;    
+    padding-bottom: 0.5rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    border-radius: 1rem;
+}
+
+.error-popup {
+    background-color: white;
+    margin-left: 20rem;
+    margin-right: 20rem;
+    padding-top: 0.5rem;    
+    padding-bottom: 0.5rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    border-radius: 1rem;
+}
+
+#error-msg {
+    color: red;
 }

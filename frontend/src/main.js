@@ -10,6 +10,9 @@ const url = "http://localhost:" + String(BACKEND_PORT);
 let login_form = document.forms.login_form;
 let signup_form = document.forms.signup_form;
 
+//* Error handling variables *//
+let prev_display_bubble = document.querySelector(".login-bubble");
+
 //* Functions to submit login form
 // Login email
 let login_email = login_form.email_li;
@@ -52,8 +55,13 @@ const submit_login = (event) => {
             console.log("Success: ", data);
         })
         .catch(err => {
+            prev_display_bubble = document.querySelector(".login-bubble");
+            display_error_popup("Invalid Email or Password");
             console.log("Error: ", err);
         });
+    
+    //! Take the user to the main page
+    
     event.preventDefault();
 }
 login_button.onclick = submit_login;
@@ -92,7 +100,8 @@ let signup_button = document.getElementById('signup-button');
 const submit_signup = (event) => {
     
     if (signup_password != signup_password_conf) { 
-        //! Error msg popup
+        prev_display_bubble = document.querySelector(".signup-bubble");
+        display_error_popup("Passwords don\'t match!\0");
         console.log("Error: passwords don\'t match");
         return;
     }
@@ -125,8 +134,13 @@ const submit_signup = (event) => {
             console.log('Success:', data);
         })
         .catch(err => {
+            prev_display_bubble = document.querySelector(".signup-bubble");
+            display_error_popup("Invalid Input");
             console.log("Error: ", err);
         });
+        
+    //! Take the user to the main page
+        
     event.preventDefault();
 }
 signup_button.onclick = submit_signup;
@@ -137,7 +151,7 @@ const display_signup = () => {
     const login_bubble = document.querySelector(".login-bubble");
     login_bubble.style.display = "none";
     const signup_bubble = document.querySelector(".signup-bubble");
-    signup_bubble.style.display = "inline";
+    signup_bubble.style.display = "block";
     login_form.reset();
 }
 const signup_hyperlink = document.querySelector(".signup-hyperlink");
@@ -147,8 +161,23 @@ const display_login = () => {
     const signup_bubble = document.querySelector(".signup-bubble");
     signup_bubble.style.display = "none";
     const login_bubble = document.querySelector(".login-bubble");
-    login_bubble.style.display = "inline";
+    login_bubble.style.display = "block";
     signup_form.reset();
 }
 const login_hyperlink = document.querySelector(".login-hyperlink");
 login_hyperlink.addEventListener("click", display_login);
+
+const display_error_popup = (error_msg) => {
+    const error_popup = document.querySelector(".error-popup");
+    document.getElementById("error-msg").innerHTML = error_msg;
+    prev_display_bubble.style.display = "none";
+    error_popup.style.display = "block";
+}
+
+const close_button = document.getElementById("close-popup");
+const close_error_popup = () => {
+    const error_popup = document.querySelector(".error-popup");
+    error_popup.style.display = "none";
+    prev_display_bubble.style.display = "block";
+}
+close_button.onclick = close_error_popup;
