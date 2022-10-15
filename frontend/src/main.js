@@ -7,6 +7,8 @@ console.log('Let\'s go!');
 const url = "http://localhost:" + String(BACKEND_PORT);
 
 //* Form variables *//
+var token;
+var userId;
 let login_form = document.forms.login_form;
 let signup_form = document.forms.signup_form;
 
@@ -53,6 +55,11 @@ const submit_login = (event) => {
         })
         .then(data => {
             console.log("Success: ", data);
+            // Store the token and userId
+            token = data["token"];
+            userId = data["userId"];
+            // Take the user to the main page
+            display_mainpage();
         })
         .catch(err => {
             prev_display_bubble = document.querySelector(".login-bubble");
@@ -60,7 +67,7 @@ const submit_login = (event) => {
             console.log("Error: ", err);
         });
     
-    //! Take the user to the main page
+    
     
     event.preventDefault();
 }
@@ -117,7 +124,7 @@ const submit_signup = (event) => {
     fetch(url + "/auth/register", {
         method: "POST",
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
         },
         body: JSON.stringify(data)
     })
@@ -132,6 +139,11 @@ const submit_signup = (event) => {
         })
         .then(data => {
             console.log('Success:', data);
+            // Store the token and userId
+            token = data["token"];
+            userId = data["userId"];
+            // Take the user to the main page
+            display_mainpage();
         })
         .catch(err => {
             prev_display_bubble = document.querySelector(".signup-bubble");
@@ -139,14 +151,45 @@ const submit_signup = (event) => {
             console.log("Error: ", err);
         });
         
-    //! Take the user to the main page
-        
+    
     event.preventDefault();
 }
 signup_button.onclick = submit_signup;
 
+//* Functions to signout
+let signout_button = document.getElementById('signout-button');
+const signout_function = () => {
+    let data = {};
+    fetch(url + "/auth/logout", {
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify(data)
+    })
+        .then(res => {
+            if (res.ok) {
+                return res.json();
+            } else {
+                throw new Error(`Error: ${res.status}`);
+            }
+        })
+        .then(data => {
+            console.log('Success:', data);
+            // Take the user back to login page
+            hide_mainpage();
+            display_login();
+        })
+        .catch(err => {
+            console.log('Error: ', err);
+        });
 
-//* Functions to toggle between Login/Signup page
+    
+}
+signout_button.onclick = signout_function;
+
+//* Functions to toggle between pages
 const display_signup = () => {
     const login_bubble = document.querySelector(".login-bubble");
     login_bubble.style.display = "none";
@@ -181,3 +224,154 @@ const close_error_popup = () => {
     prev_display_bubble.style.display = "block";
 }
 close_button.onclick = close_error_popup;
+
+const display_mainpage = () => {
+    const login_button = document.querySelector(".login-bubble");
+    login_button.style.display = "none";
+    login_form.reset();
+    const signup_bubble = document.querySelector(".signup-bubble");
+    signup_bubble.style.display = "none";
+    signup_form.reset();
+    
+    // Do the channel banner
+    var users_name;
+    fetch(url + "/user/" + userId, {
+        method: "GET",
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'userId': userId
+        }
+    })
+        .then(res => {
+            if (res.ok) {
+                return res.json();
+            } else {
+                throw new Error(`Error: ${res.status}`);
+            }
+        })
+        .then(data => {
+            console.log('Success:', data);
+            users_name = data["name"];
+            let welcome_banner = document.getElementById("welcome-banner");
+            welcome_banner.innerHTML = "Welcome to Slackr, " + users_name + "!!";
+        })
+        .catch(err => {
+            console.log('Error: ', err);
+        });
+
+    // Do the list of channels and display
+    fetch(url + "/channel", {
+        method: "GET",
+        headers: {
+            'Authorization': 'Bearer ' + token
+        }
+    })
+        .then(res => {
+            if (res.ok) {
+                return res.json();
+            } else {
+                throw new Error(`Error: ${res.status}`);
+            }
+        })
+        .then(data => {
+            console.log('Success:', data);
+            let channels_tabs_wrapper = document.querySelector('.channels-tabs-wrapper');
+            for (var channel in data) {
+                let tab = document.createElement("div");
+                let tab_label = document.createElement("h6");
+                tab_label.innerHTML = channel["name"];
+                tab.appendChild(tab_label);
+                tab.onclick = open_channel(channel["id"]);
+                channels_tabs_wrapper.appendChild(tab);
+            }
+        })
+        .catch(err => {
+            console.log('Error: ', err);
+        });
+    
+    const slackr_mainpage = document.querySelector(".slackr-mainpage");
+    slackr_mainpage.style.display = "block";
+}
+
+const hide_mainpage = () => {
+    const slackr_mainpage = document.querySelector(".slackr-mainpage");
+    slackr_mainpage.style.display = "none";
+    let channels_tabs_wrapper = document.querySelector('.channels-tabs-wrapper');
+    while(channels_tabs_wrapper.firstChild) 
+        channels_tabs_wrapper.removeChild(channels_tabs_wrapper.lastChild);
+}
+
+const open_channel = (channelId) => {
+    fetch(url + "/channel", {
+        method: "GET",
+        headers: {
+            'Authorization': 'Bearer ' + token
+        }
+    })
+        .then(res => {
+            if (res.ok) {
+                return res.json();
+            } else {
+                throw new Error(`Error: ${res.status}`);
+            }
+        })
+        .then(data => {
+            console.log('Success: ', data);
+            //! Find the channel based on channelId
+            var channel;
+            let channelFound = false;
+            for (channel in data["channels"]) {
+                if (data["channels"]["id"] == channelId) {
+                    channelFound = true;
+                }
+            }
+            if (!channelFound) {
+                throw new Error("Error: channel doesn't exist");
+            }
+            fetch(url + "/channel/" + channelId, {
+                method: "GET",
+                headers: {
+                    'authorization': 'bearer ' + token,
+                    'channelId': channelId
+                }
+            });
+
+        })
+        .catch(err =>  {
+            console.log("Error: ", err);
+        });
+}
+
+const new_channel_tab = document.getElementById("create-channel-tab");
+const create_channel = () => {
+    //! GOTTA CREATE ANOTHER POP UP TO COLLECT DATA FOR THE NEW CHANNEL
+
+    data = {
+        'name': channel_name,
+        'private': priv,
+        'description': desc
+    }
+
+    fetch(url + "/channel", {
+        method: "POST",
+        headers: {
+            'Authorization': 'Bearer ' + token
+        }, 
+        body: JSON.stringify(data)
+    })
+        .then(res => {
+            if (res.ok) {
+                return res.json();
+            } else {
+                throw new Error(`Error: ${res.status}`);
+            }
+        })
+        .then(data => {
+            console.log('Success: ', data);
+
+        })
+        .catch(err =>  {
+            console.log("Error: ", err);
+        });
+}
+new_channel_tab.addEventListener('click', create_channel);

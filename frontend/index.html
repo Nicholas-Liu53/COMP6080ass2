@@ -16,6 +16,9 @@
     .error-popup {
       display: none;
     }
+    .slackr-mainpage {
+      display: none;
+    }
     </style>
 </head>
 
@@ -30,7 +33,7 @@
       <p id="error-msg"></textarea>
       <br>
       <p></p>
-      <button name="close_popup" id="close-popup">Close Popup</button>
+      <button name="close_popup" id="close-popup">Close</button>
       <br><br>
     </div>
     <div class="login-bubble">
@@ -73,6 +76,24 @@
         <a href="#" class="login-hyperlink">LOGIN</a>
       </p>
     </div>
+    <section class="slackr-mainpage">
+      <section class="main-top-row">
+        <b id="welcome-banner" >Welcome to Slackr, </b>
+        <div class="buttons-and-links-at-end">
+          <button name="signout-button" id="signout-button">Sign Out</button>
+        </div>
+      </section>
+      <section class="main-bottom-content">
+        <div class="channels-list">
+          <div class="channel-tabs-wrapper">
+          </div>
+          <div id="create-channel-tab">Create a new channel</div>
+        </div>
+        <div class="channel-screen">
+          <p> For real </p>
+        </div>
+    </section>
+    </section>
   </main>
   <footer>
     <p>&copy; Slackr 2022</p>
