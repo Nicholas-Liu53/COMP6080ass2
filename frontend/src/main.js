@@ -436,6 +436,6 @@ create_channel_button.onclick = create_channel;
 // Button that closes the new channel form (incase you misclick)
 const close_new_channel_form_button = document.getElementById("close-new-channel-form-button");
 let close_new_channel_form = () => {
-    //! TODO: After you come back from bball hehe
+    //! TODO: After you come back from bball + hotpot hehe
 }
 close_new_channel_form_button.onclick = close_new_channel_form;
