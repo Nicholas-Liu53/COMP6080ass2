@@ -19,6 +19,9 @@
     .slackr-mainpage {
       display: none;
     }
+    .new-channel-bubble {
+      display: none;
+    }
     </style>
 </head>
 
@@ -92,7 +95,24 @@
         <div class="channel-screen">
           <p> For real </p>
         </div>
-    </section>
+        <div class="new-channel-bubble">
+          <form name="new-channel-form" id="new-channel-form">
+            <label for="new-channel-name">Channel name</label><br>
+            <input type="text" id="new-channel-name" name="new_channel_name">
+            <br><br>
+            <label for="new-channel-priv-status">Make private</label><br>
+            <input type="checkbox" id="new-channel-priv-status" name="new_channel_priv_status">
+            <br><br>
+            <label for="new-channel-desc">Description</label><br>
+            <input type="text" id="new-channel-desc" name="new_channel_desc">
+          </form>
+          <br><br>
+          <div>
+            <button name="create-channel-button" id="create-channel-button">Create</button>
+            <button name="close-new-channel-form-button" id="close-new-channel-form-button">Close</button>
+          </div>
+        </div>
+      </section>
     </section>
   </main>
   <footer>

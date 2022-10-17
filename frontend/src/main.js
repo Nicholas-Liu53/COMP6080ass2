@@ -6,11 +6,16 @@ console.log('Let\'s go!');
 
 const url = "http://localhost:" + String(BACKEND_PORT);
 
+//********************************************************************/
+//**                         Milestone 1                            **/
+//********************************************************************/
+
 //* Form variables *//
 var token;
 var userId;
 let login_form = document.forms.login_form;
 let signup_form = document.forms.signup_form;
+let new_channel_form = document.forms.new_channel_form;
 
 //* Error handling variables *//
 let prev_display_bubble = document.querySelector(".login-bubble");
@@ -157,6 +162,7 @@ const submit_signup = (event) => {
 signup_button.onclick = submit_signup;
 
 //* Functions to signout
+// Signout button
 let signout_button = document.getElementById('signout-button');
 const signout_function = () => {
     let data = {};
@@ -190,6 +196,7 @@ const signout_function = () => {
 signout_button.onclick = signout_function;
 
 //* Functions to toggle between pages
+// Display the signup page
 const display_signup = () => {
     const login_bubble = document.querySelector(".login-bubble");
     login_bubble.style.display = "none";
@@ -200,6 +207,7 @@ const display_signup = () => {
 const signup_hyperlink = document.querySelector(".signup-hyperlink");
 signup_hyperlink.addEventListener("click", display_signup);
 
+// Display the login page
 const display_login = () => {
     const signup_bubble = document.querySelector(".signup-bubble");
     signup_bubble.style.display = "none";
@@ -210,6 +218,7 @@ const display_login = () => {
 const login_hyperlink = document.querySelector(".login-hyperlink");
 login_hyperlink.addEventListener("click", display_login);
 
+// Display the error popups
 const display_error_popup = (error_msg) => {
     const error_popup = document.querySelector(".error-popup");
     document.getElementById("error-msg").innerHTML = error_msg;
@@ -217,6 +226,7 @@ const display_error_popup = (error_msg) => {
     error_popup.style.display = "block";
 }
 
+// Close the error popups
 const close_button = document.getElementById("close-popup");
 const close_error_popup = () => {
     const error_popup = document.querySelector(".error-popup");
@@ -225,6 +235,11 @@ const close_error_popup = () => {
 }
 close_button.onclick = close_error_popup;
 
+//********************************************************************/
+//**                         Milestone 2                            **/
+//********************************************************************/
+
+// Display the mainpage (when you log in)
 const display_mainpage = () => {
     const login_button = document.querySelector(".login-bubble");
     login_button.style.display = "none";
@@ -293,6 +308,7 @@ const display_mainpage = () => {
     slackr_mainpage.style.display = "block";
 }
 
+// Hide the main page (used when logging out)
 const hide_mainpage = () => {
     const slackr_mainpage = document.querySelector(".slackr-mainpage");
     slackr_mainpage.style.display = "none";
@@ -301,6 +317,7 @@ const hide_mainpage = () => {
         channels_tabs_wrapper.removeChild(channels_tabs_wrapper.lastChild);
 }
 
+// Opening the channel
 const open_channel = (channelId) => {
     fetch(url + "/channel", {
         method: "GET",
@@ -317,7 +334,7 @@ const open_channel = (channelId) => {
         })
         .then(data => {
             console.log('Success: ', data);
-            //! Find the channel based on channelId
+            // Find the channel based on channelId
             var channel;
             let channelFound = false;
             for (channel in data["channels"]) {
@@ -334,22 +351,61 @@ const open_channel = (channelId) => {
                     'authorization': 'bearer ' + token,
                     'channelId': channelId
                 }
-            });
-
+            }) /*!! INCOMPLETE HERE PLEASE FINISH NICHOLAS !!*/;
+            //! Basically just display the channel chat msgs and msg box
         })
         .catch(err =>  {
             console.log("Error: ", err);
         });
 }
 
+// Tab that displays a create channel bubble
 const new_channel_tab = document.getElementById("create-channel-tab");
+const display_new_channel_form = () => {
+    const channel_screen = document.querySelector(".channel-screen");
+    channel_screen.style.display = "none";
+    const new_channel_bubble = document.querySelector(".new-channel-bubble");
+    new_channel_bubble.style.display = "block";
+}
+new_channel_tab.addEventListener('click', display_new_channel_form);
+
+//* New channel form functions
+// New channel name
+let new_channel_name = new_channel_form.new_channel_name;
+let new_channel_name_handler = (event) => {
+    new_channel_name = event.target.value;
+    console.log("New Channel Name: " + new_channel_name);
+}
+new_channel_name.addEventListener('change', new_channel_name_handler);
+
+// New channel private status
+let new_channel_priv_status = new_channel_form.new_channel_priv_status;
+let new_channel_priv_status_handler = (event) => {
+    new_channel_priv_status = event.target.value;
+    console.log("New Channel Private Status: " + new_channel_priv_status);
+}
+new_channel_priv_status.addEventListener('change', new_channel_priv_status_handler);
+
+// New channel description
+let new_channel_desc = new_channel_form.new_channel_desc;
+let new_channel_desc_handler = (event) => {
+    new_channel_desc = event.target.value;
+    console.log("New Channel Description: " + new_channel_desc);
+}
+new_channel_desc.addEventListener('change', new_channel_desc_handler);
+
+// Tab that creates the channel and then displays the channel
+const create_channel_button = document.getElementById("create-channel-button");
 const create_channel = () => {
-    //! GOTTA CREATE ANOTHER POP UP TO COLLECT DATA FOR THE NEW CHANNEL
+    const new_channel_bubble = document.querySelector(".new-channel-bubble");
+    new_channel_bubble.style.display = "none";
+
+    //! I think there's nothing left to do here but double check pls
 
     data = {
-        'name': channel_name,
-        'private': priv,
-        'description': desc
+        'name': new_channel_name,
+        'private': new_channel_priv_status,
+        'description': new_channel_desc
     }
 
     fetch(url + "/channel", {
@@ -368,10 +424,18 @@ const create_channel = () => {
         })
         .then(data => {
             console.log('Success: ', data);
+            open_channel(data['channelId']);
 
         })
         .catch(err =>  {
             console.log("Error: ", err);
         });
 }
-new_channel_tab.addEventListener('click', create_channel);
+create_channel_button.onclick = create_channel;
+
+// Button that closes the new channel form (incase you misclick)
+const close_new_channel_form_button = document.getElementById("close-new-channel-form-button");
+let close_new_channel_form = () => {
+    //! TODO: After you come back from bball hehe
+}
+close_new_channel_form_button.onclick = close_new_channel_form;
