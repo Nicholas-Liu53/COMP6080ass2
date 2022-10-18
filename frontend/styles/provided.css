@@ -10,7 +10,7 @@ html, body {
     flex-direction: column;
 }
 
-.login-bubble {
+#login-bubble {
     background-color: white;
     margin-left: 20vw;
     margin-right: 20vw;
@@ -21,7 +21,7 @@ html, body {
     border-radius: 1rem;
 }
 
-.signup-bubble {
+#signup-bubble {
     background-color: white;
     margin-left: 20vw;
     margin-right: 20vw;
@@ -32,7 +32,7 @@ html, body {
     border-radius: 1rem;
 }
 
-.error-popup {
+#error-popup {
     background-color: white;
     margin-left: 20vw;
     margin-right: 20vw;
@@ -47,18 +47,18 @@ html, body {
     color: red;
 }
 
-.slackr-mainpage {
+#slackr-mainpage {
     background-color: #bf7aff;
     display: flex;
 }
 
-.main-top-row {
+#main-top-row {
     display: inline;
     justify-content: space-around;
     width: 100vw;
 }
 
-.buttons-and-links-at-end {
+#buttons-and-links-at-end {
     display: flex;
     justify-content: flex-end;
 }
@@ -67,16 +67,17 @@ html, body {
     float: right;
 }
 
-.main-bottom-content {
+#main-bottom-content {
     display: flex;
+    /* flex-direction: row; */
 }
 
-.channels-list {
+#channels-list {
     background-color: #dcb7ff;
     width: 10vw;
 }
 
-.channel-screen {
+#channel-screen {
     background-color: white;
     width: 90vw;
 }

@@ -10,16 +10,16 @@
   <link rel="stylesheet" type="text/css" media="screen" href="styles/provided.css" />
   <script type="module" src="src/helpers.js"></script>
   <style>
-    .signup-bubble {
+    #signup-bubble {
       display: none;
     }
-    .error-popup {
+    #error-popup {
       display: none;
     }
-    .slackr-mainpage {
+    #slackr-mainpage {
       display: none;
     }
-    .new-channel-bubble {
+    #new-channel-bubble {
       display: none;
     }
     </style>
@@ -32,14 +32,14 @@
   </header>
   <main role="main">
     <!-- app goes here -->
-    <div class="error-popup">
+    <div id="error-popup">
       <p id="error-msg"></textarea>
       <br>
       <p></p>
       <button name="close_popup" id="close-popup">Close</button>
       <br><br>
     </div>
-    <div class="login-bubble">
+    <div id="login-bubble">
       <form name="login_form">
         <h3>Login</h3>
         <label for="email-li">Email</label><br>
@@ -53,10 +53,10 @@
       <br><br>
       <p>
         Need an account?
-        <a href="#" class="signup-hyperlink">SIGN UP</a>
+        <a href="#" id="signup-hyperlink">SIGN UP</a>
       </p>
     </div>
-    <div class="signup-bubble">
+    <div id="signup-bubble">
       <form name="signup_form">
         <h3>Sign up</h3>
         <label for="email-su">Email</label><br>
@@ -76,27 +76,32 @@
       <br><br>
       <p>
         Already a user? 
-        <a href="#" class="login-hyperlink">LOGIN</a>
+        <a href="#" id="login-hyperlink">LOGIN</a>
       </p>
     </div>
-    <section class="slackr-mainpage">
-      <section class="main-top-row">
+    <section id="slackr-mainpage">
+      <section id="main-top-row">
         <b id="welcome-banner" >Welcome to Slackr, </b>
-        <div class="buttons-and-links-at-end">
+        <div id="buttons-and-links-at-end">
           <button name="signout-button" id="signout-button">Sign Out</button>
         </div>
       </section>
-      <section class="main-bottom-content">
-        <div class="channels-list">
-          <div class="channel-tabs-wrapper">
+      <section id="main-bottom-content">
+        <div id="channels-list">
+          <div id="channel-tabs-wrapper">
           </div>
           <div id="create-channel-tab">Create a new channel</div>
         </div>
-        <div class="channel-screen">
-          <p> For real </p>
-        </div>
-        <div class="new-channel-bubble">
-          <form name="new-channel-form" id="new-channel-form">
+          <div id="channel-screen">
+            <div id="channel-heading-wrapper"></div>
+            <section class="channel-messages"></section>
+            <div class="message-box-area">
+              <textarea name="message-box" id="message-box" cols="30" rows="10"></textarea>
+              <button name="send-msg-button" id="send-msg-button">Send</button>
+            </div>
+          </div>
+        <div id="new-channel-bubble">
+          <form name="new_channel_form">
             <label for="new-channel-name">Channel name</label><br>
             <input type="text" id="new-channel-name" name="new_channel_name">
             <br><br>
@@ -108,8 +113,8 @@
           </form>
           <br><br>
           <div>
+            <button name="close-new-channel-form-button" id="close-new-channel-form-button">Cancel</button>
             <button name="create-channel-button" id="create-channel-button">Create</button>
-            <button name="close-new-channel-form-button" id="close-new-channel-form-button">Close</button>
           </div>
         </div>
       </section>
@@ -121,5 +126,13 @@
   <script type="module" src="src/main.js"></script>
   <script type="module" src="./src/auth.js"></script>
 </body>
-
 </html>
+
+<!-- <svg height="20px" width="50px" viewBox="0 0 230 100">
+  <path d="M52.23,66.35c3.6-1.59,7.17-2.48,10.68-2.55c3.47-0.07,6.83,0.67,10.08,2.34c2-2.9,5.35-4.81,9.15-4.81 c6.13,0,11.11,4.97,11.11,11.11c0,6.14-4.97,11.11-11.11,11.11c-6.14,0-11.11-4.97-11.11-11.11c0-0.24,0.01-0.49,0.02-0.73 c-2.59-1.49-5.28-2.14-8.05-2.09c-2.86,0.05-5.85,0.87-8.97,2.31c0.01,0.17,0.01,0.33,0.01,0.5c0,6.14-4.97,11.11-11.11,11.11 c-6.13,0-11.11-4.97-11.11-11.11c0-6.14,4.97-11.11,11.11-11.11C46.83,61.33,50.25,63.33,52.23,66.35L52.23,66.35z M34.42,4.6 c5.56-6.68,7.7-4.62,14.47-2.79c8.46,2.28,16.72,2.84,25.5,0.32c6.53-1.88,9.39-4.49,15.28,2.08C94,9.03,96.69,16.78,98.3,21.64 c1.93,5.81,3.25,11.77,4.04,17.85H22.73C25.57,25.21,28.98,12.38,34.42,4.6L34.42,4.6z M4.48,43.46H118.4 c2.47,0,4.48,2.02,4.48,4.48v0c0,2.47-2.02,4.48-4.48,4.48H4.48C2.02,52.42,0,50.41,0,47.94v0C0,45.48,2.02,43.46,4.48,43.46 L4.48,43.46z"/>
+</svg> -->
+
+<!-- <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" stroke="#000" fill="none" viewBox="0 0 450 450">
+  <path stroke-width="26" d="M209,15a195,195 0 1,0 2,0z"/>
+  <path stroke-width="18" d="m210,15v390m195-195H15M59,90a260,260 0 0,0 302,0 m0,240 a260,260 0 0,0-302,0M195,20a250,250 0 0,0 0,382 m30,0 a250,250 0 0,0 0-382"/>
+</svg> -->
