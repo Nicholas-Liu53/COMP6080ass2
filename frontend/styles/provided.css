@@ -175,7 +175,7 @@ html, body {
 #send-msg-button {
     display: block;
     /* position: absolute; */
-    height: 52.5px;
+    height: 51px;
     width: fit-content;
 }
 

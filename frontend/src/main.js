@@ -462,66 +462,17 @@ let open_channel = (channelId) => {
     }
 
     //! Milestone 3 - Display channel msgs
-    display_channel_msgs(channelId);
+    display_channel_msgs(channelId, 0);
+
+    //! Milestone 3 - Set send button for this channel
+    let send_button = document.getElementById("send-msg-button");
+    send_button.onclick = send_message(channelId);
+
+    //! Milestone 3 - Clear the message box
+    document.getElementById("message-box").value = "";
 
     const channel_screen = document.getElementById("channel-screen");
     channel_screen.style.display = "flex";
-
-    // console.log("channelId :", channelId);
-
-    // fetch(url + /channel/ + channelId, {
-    //     method: "GET",
-    //     headers: {
-    //         'Authorization': 'Bearer ' + token,
-    //         'Content-Type': 'application/json',
-    //         // 'channelId': channelId
-    //     }
-    // })
-    //     .then(res => {
-    //         if (res.ok) {
-    //             return res.json();
-    //         } else {
-    //             throw new Error(`Error: ${res.status}`);
-    //         }
-    //     })
-    //     .then(data => {
-    //         // console.log('Success:', data);
-    //         //! Kill children in the header and messages first for clean slate
-    //         let channel_heading = document.querySelector('.channel-heading');
-    //         while (channel_heading.firstChild != null) {
-    //             channel_heading.removeChild(channel_heading.lastChild);
-    //         }
-    //         let channel_messages = document.querySelector('.channel-messages');
-    //         while (channel_messages.firstChild != null) {
-    //             channel_messages.removeChild(channel_messages.lastChild);
-    //         }
-
-    //         // Show channel name
-    //         let channel_name = document.createElement("h4");
-    //         channel_name.textContent = data["name"];
-    //         channel_heading.appendChild(channel_name);
-    //         // Show channel details (that's not desc)
-    //         // Priv?
-    //         let channel_details = document.createElement("i");
-    //         channel_details.textContent = data["private"] ? "Private" : "Public";
-    //         channel_details.textContent = channel_details.textContent + " channel - Created ";
-    //         // Creator?
-    //         get_user_details(data["creator"]).then((data_layer_3) => { channel_details.textContent = channel_details.textContent + " by " + data_layer_3["name"]; });
-    //         // Creation Date?
-    //         let creation_date = new Date(data["createdAt"]);
-    //         // console.log(creation_date);
-    //         channel_details.textContent = channel_details.textContent + " on " + creation_date.getDate() + " " + months[creation_date.getMonth()] + " " + creation_date.getFullYear();
-    //         channel_heading.appendChild(channel_details);
-    //         // Show channel desc
-    //         let channel_desc = document.createElement("p");
-    //         channel_desc.textContent = data["description"];
-    //         channel_heading.appendChild(channel_desc);
-    //     })
-    //     .catch(err => {
-    //         // console.log('Error: ', err);
-    //     });   
-
-
 }
 
 // Tab that displays a create channel bubble
@@ -735,7 +686,7 @@ const get_channels = () => {
 //**                         Milestone 3                            **/
 //********************************************************************/
 // Function that displays channel messages
-const display_channel_msgs = (channelId) => {
+const display_channel_msgs = (channelId, startIndex) => {
     
     let channel_messages = document.getElementById("channel-messages");
     //! Kill all children heehaw
@@ -747,7 +698,9 @@ const display_channel_msgs = (channelId) => {
         method: "GET",
         headers: {
             'Authorization': 'Bearer ' + token,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'channelId': channelId,
+            'start': startIndex
         }
     })
         .then(res => {
@@ -759,19 +712,23 @@ const display_channel_msgs = (channelId) => {
         })
         .then(data => {
             console.log('Success:', data);
+            let channel_messages = document.getElementById("channel-messages");
             for (var msg in data["messages"]) {
+
 
                 // Each message bubble contains ...
                 let msg_bubble = document.createElement("div");
                 msg_bubble.id = msg["id"];
                 msg_bubble.className = "msg-bubble";
                 
-                // (break into 3 parts:
+                // SIDENOTE - break into 3 parts:
                 //      1. Msg details
                 //      2. Msg itself
                 //      3. Reacts
-                // )
+
                 let msg_details = document.createElement("div");
+
+                //! Peg on dp first to msg_details
 
                 // Sender's name
                 let sender_name = document.createElement("h5");
@@ -784,7 +741,7 @@ const display_channel_msgs = (channelId) => {
                 // Sent time
                 let sent_time = document.createElement("h6");
                 sent_time.className = "sent-time";
-                let date_time = new Date(data["sentAt"]);
+                let date_time = new Date(msg["sentAt"]);
                 // If sent on same day or yesterday --> show time
                 // Else just show date
                 if (is_today(date_time)) {
@@ -799,11 +756,107 @@ const display_channel_msgs = (channelId) => {
                     let line_break = document.createElement("br");
                     msg_details.appendChild(line_break);
                     let edit_time = new Date(date["editedAt"]);
-                    sent_time.textContent += ", edited " + ("0" + date_time.getHours()).slice(-2) + ":" + ("0" + date_time.getMinutes()).slice(-2) + ("0" + date_time.getDate()).slice(-2) + "/" + ("0" + (date_time.getMonth() + 1)).slice(-2) + "/" + date_time.getFullYear();
-
+                    sent_time.textContent += ", edited " + ("0" + edit_time.getHours()).slice(-2) + ":" + ("0" + edit_time.getMinutes()).slice(-2) + " " + ("0" + edit_time.getDate()).slice(-2) + "/" + ("0" + (edit_time.getMonth() + 1)).slice(-2) + "/" + edit_time.getFullYear();
                 }
                 msg_details.appendChild(sent_time);
+                msg_bubble.appendChild(msg_details);
 
+                // The message itself
+                let msg_itself = document.createElement("p");
+                msg_itself.textContent = msg["message"];
+                msg_bubble.appendChild(msg_itself);
+
+                
+                // Reactions
+                //! This part's time complexity is scuffed
+                //! so just comment it out when testing other stuff
+                let msg_reactions = document.createElement("div");
+
+                let string_reaction_bubble = document.createElement("div");
+
+                string_reaction_bubble.className = "string-reaction-bubble";
+                //! Insert emoji icon for bubble
+                let string_reaction_popup = document.createElement("span");
+                string_reaction_popup.textContent = "No reacts";
+
+                let boolean_reaction_bubble = document.createElement("div");
+                //! Insert emoji icon for bubble
+                boolean_reaction_bubble.className = "boolean-reaction-bubble";
+                let boolean_reaction_popup = document.createElement("span");
+                boolean_reaction_popup.textContent = "No reacts";
+
+                let number_reaction_bubble = document.createElement("div");
+                //! Insert emoji icon for bubble
+                number_reaction_bubble.className = "number-reaction-bubble";
+                let number_reaction_popup = document.createElement("span");
+                number_reaction_popup.textContent = "No reacts";
+
+                let react_string_counter = 0;
+                let react_boolean_counter = 0;
+                let react_number_counter = 0;
+
+                for (var reaction of msg["react"]) {
+                    
+                    // get the name of the reactor
+                    var reactorUserName;
+                    get_user_details(reaction["user"]).then((inner_data) => {
+                        reactorUserName = inner_data["name"];
+                    });
+
+                    if (reaction["react"] === "string") {
+                        if (react_string_counter == 0) {
+                            string_reaction_popup.textContent = reactorUserName;
+                        } else if (react_string_counter == 1) {
+                            string_reaction_popup.textContent = reactorUserName + " and " + string_reaction_popup.textContent;
+                        } else {
+                            string_reaction_popup.textContent = reactorUserName + ", " + string_reaction_popup.textContent;
+                        }
+                        react_string_counter++;
+                    }
+                    if (reaction["react"] === "boolean") {
+                        if (react_boolean_counter == 0) {
+                            boolean_reaction_popup.textContent = reactorUserName;
+                        } else if (react_boolean_counter == 1) {
+                            boolean_reaction_popup.textContent = reactorUserName + " and " + boolean_reaction_popup.textContent;
+                        } else {
+                            boolean_reaction_popup.textContent = reactorUserName + ", " + boolean_reaction_popup.textContent;
+                        }
+                        react_boolean_counter++;
+                    }
+                    if (reaction["react"] === "number") {
+                        if (react_number_counter == 0) {
+                            number_reaction_popup.textContent = reactorUserName;
+                        } else if (react_number_counter == 1) {
+                            number_reaction_popup.textContent = reactorUserName + " and " + number_reaction_popup.textContent;
+                        } else {
+                            number_reaction_popup.textContent = reactorUserName + ", " + number_reaction_popup.textContent;
+                        }
+                        react_number_counter++;
+                    }
+                }
+
+                let string_reaction_count = document.createElement("h6");
+                string_reaction_count.textContent = String(react_string_counter);
+                string_reaction_bubble.appendChild(string_reaction_count);
+                string_reaction_bubble.appendChild(string_reaction_popup);
+
+                let boolean_reaction_count = document.createElement("h6");
+                boolean_reaction_count.textContent = String(react_boolean_counter);
+                boolean_reaction_bubble.appendChild(boolean_reaction_count);
+                boolean_reaction_bubble.appendChild(boolean_reaction_popup);
+                
+                let number_reaction_count = document.createElement("h6");
+                number_reaction_count.textContent = String(react_number_counter);
+                number_reaction_bubble.appendChild(number_reaction_count);
+                number_reaction_bubble.appendChild(number_reaction_popup);
+
+                msg_reactions.appendChild(string_reaction_bubble);
+                msg_reactions.appendChild(boolean_reaction_bubble);
+                msg_reactions.appendChild(number_reaction_bubble);
+
+                msg_bubble.appendChild(msg_reactions);
+
+                channel_messages.appendChild(msg_bubble);
             }
         })
         .catch(err => {
@@ -822,4 +875,40 @@ const is_yesterday = (date) => {
     let yes = new Date();
     yes.setDate(yes.getDate() - 1);
     return yes.toDateString() === date.toDateString();
+}
+
+// Function that sends messages 
+const send_message = (channelId) => {
+
+    let msg = document.createElementById("message-box").value;
+
+    let data = {
+        "message": msg,
+        "image": ""
+    }
+
+    document.createElementById("message-box").value = "";
+
+    fetch(url + /message/ + channelId, {
+        method: "POST",
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+        .then(res => {
+            if (res.ok) {
+                return res.json();
+            } else {
+                throw new Error(`Error: ${res.status}`);
+            }
+        })
+        .then(data => {
+            console.log('Success:', data);
+            //! Need to do smth about the view
+        })
+        .catch(err => {
+            console.log("Error:", err);
+        });
 }
