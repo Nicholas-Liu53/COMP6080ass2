@@ -303,14 +303,24 @@ const display_mainpage = () => {
         .then(data => {
             // console.log('Success:', data);
             let channel_tabs_wrapper = document.getElementById('channel-tabs-wrapper');
+            //! Kill all children of wrapper and tabs first
+            while (channel_tabs_wrapper.firstChild) {
+                channel_tabs_wrapper.removeChild(channel_tabs_wrapper.lastChild);
+            }
+            let channel_heading_wrapper = document.getElementById('channel-heading-wrapper');
+            while (channel_heading_wrapper.firstChild) {
+                channel_heading_wrapper.removeChild(channel_heading_wrapper.lastChild);
+            }
             for (var channel of data["channels"]) {
-                console.log("channel: ", channel);
+                // console.log("channel: ", channel);
                 if (!channel["private"] || channel["members"].includes(userId)) {
 
-                    let channel_heading_wrapper = document.getElementById('channel-heading-wrapper');
+                    // Store the channel id here to avoid weird pointer quirks
+                    let locally_channel_id = channel["id"];
+
                     let channel_heading = document.createElement('div');
                     channel_heading.className = "channel-heading";
-                    channel_heading.id = channel["id"];
+                    channel_heading.id = "channel-heading-for-" + channel["id"];
                     
                     // Create heading
                     let channel_name = document.createElement("h4");
@@ -321,18 +331,19 @@ const display_mainpage = () => {
                     let channel_details = document.createElement("i");
                     channel_details.textContent = channel["private"] ? "Private" : "Public";
                     channel_details.textContent = channel_details.textContent + " channel - Created ";
+                    let channel_desc = document.createElement("p");
                     // Creator?
-                    get_user_details(channel["creator"]).then((data_layer_3) => { channel_details.textContent = channel_details.textContent + " by " + data_layer_3["name"]; });
-                    // Creation Date?
+                    get_user_details(channel["creator"]).then((data_layer_3) => { 
+                        channel_details.textContent = channel_details.textContent + " by " + data_layer_3["name"]; 
+                    });
                     get_channel_details(channel["id"]).then((data_layer_4) => { 
+                        // Creation Date?
                         let creation_date = new Date(data_layer_4["createdAt"]);
-                        // console.log(creation_date);
                         channel_details.textContent = channel_details.textContent + " on " + creation_date.getDate() + " " + months[creation_date.getMonth()] + " " + creation_date.getFullYear();
+                        // Show channel desc
+                        channel_desc.textContent = data_layer_4["description"];
                     });
                     channel_heading.appendChild(channel_details);
-                    // Show channel desc
-                    let channel_desc = document.createElement("p");
-                    channel_desc.textContent = data["description"];
                     channel_heading.appendChild(channel_desc);
 
                     channel_heading.style.display = "none";
@@ -342,13 +353,18 @@ const display_mainpage = () => {
 
                     // Create the tab itself
                     let tab = document.createElement("div");
-                    tab.className = "channels-tab";
-                    let priv_svg = document.createElement("svg");
+                    tab.className = "tab channels-tab";
+                    tab.id = "tab-for-" + channel["id"];  
+                    // console.log("Bug in");
+                    let priv_svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                    priv_svg.setAttribute("class", "priv-icon");
+                    priv_svg.id = "priv-icon-for-" + channel["id"];
+                    // console.log("Bug out");
                     if (channel["private"]) {
                         let svg_path = document.createElementNS("http://www.w3.org/2000/svg", 'path');
-                        priv_svg.setAttribute("height", "20px");
-                        priv_svg.setAttribute("width", "50px");
-                        priv_svg.setAttribute("viewBox", "0 0 230 100");
+                        priv_svg.setAttribute("height", "50");
+                        priv_svg.setAttribute("width", "50");
+                        priv_svg.setAttribute("viewBox", "-10 -25 150 125");
                         svg_path.setAttribute("d", "M52.23,66.35c3.6-1.59,7.17-2.48,10.68-2.55c3.47-0.07,6.83,0.67,10.08,2.34c2-2.9,5.35-4.81,9.15-4.81 c6.13,0,11.11,4.97,11.11,11.11c0,6.14-4.97,11.11-11.11,11.11c-6.14,0-11.11-4.97-11.11-11.11c0-0.24,0.01-0.49,0.02-0.73 c-2.59-1.49-5.28-2.14-8.05-2.09c-2.86,0.05-5.85,0.87-8.97,2.31c0.01,0.17,0.01,0.33,0.01,0.5c0,6.14-4.97,11.11-11.11,11.11 c-6.13,0-11.11-4.97-11.11-11.11c0-6.14,4.97-11.11,11.11-11.11C46.83,61.33,50.25,63.33,52.23,66.35L52.23,66.35z M34.42,4.6 c5.56-6.68,7.7-4.62,14.47-2.79c8.46,2.28,16.72,2.84,25.5,0.32c6.53-1.88,9.39-4.49,15.28,2.08C94,9.03,96.69,16.78,98.3,21.64 c1.93,5.81,3.25,11.77,4.04,17.85H22.73C25.57,25.21,28.98,12.38,34.42,4.6L34.42,4.6z M4.48,43.46H118.4 c2.47,0,4.48,2.02,4.48,4.48v0c0,2.47-2.02,4.48-4.48,4.48H4.48C2.02,52.42,0,50.41,0,47.94v0C0,45.48,2.02,43.46,4.48,43.46 L4.48,43.46z");
                         priv_svg.appendChild(svg_path);
                     } else {
@@ -368,11 +384,14 @@ const display_mainpage = () => {
                     }
                     tab.appendChild(priv_svg);
                     let tab_label = document.createElement("h6");
+                    tab_label.className = "tab-label";
+                    tab_label.id = "tab-label-for-" + channel["id"];
+                    console.log("tab_label's id: ", tab_label.id);
                     tab_label.textContent = channel["name"];
                     tab.appendChild(tab_label);
-                    console.log("channelId being parsed into listener: ", channel["id"]);
+                    // console.log("channelId being parsed into listener: ", channel["id"]);
                     tab.addEventListener('click', () => {
-                        open_channel(channel_heading.id);
+                        open_channel(locally_channel_id);
                     });
                     channel_tabs_wrapper.appendChild(tab);
                 }
@@ -399,13 +418,53 @@ const hide_mainpage = () => {
 // Opening the channel
 let open_channel = (channelId) => {
     
+    //! If new channel form is open, close it
+    let new_channel_bubble = document.getElementById("new-channel-bubble");
+    new_channel_bubble.style.display = "none";
+
     console.log("open_channel be opening: ", channelId);
 
     let channel_heading_wrapper = document.getElementById('channel-heading-wrapper');
     for (var channel_heading of channel_heading_wrapper.children) {
-        // console.log("I'm depressed: ", channel_heading.id, " I'm actually sad: ", channelId);
-        channel_heading.style.display = channel_heading.id == channelId ? "inline-block" : "none";
+        channel_heading.style.display = channel_heading.id == ("channel-heading-for-" + channelId) ? "inline-block" : "none";
+        
     }
+    // To make tab pressed
+    let channel_tabs_wrapper = document.getElementById('channel-tabs-wrapper');
+    console.log("Tabs LOOP!!");
+    for (var channel_tab of channel_tabs_wrapper.children) {
+        // Get pure id of channel_tab
+        let pure_id = channel_tab.id.replace("tab-for-", "");
+        if (channel_tab.id == ("tab-for-" + channelId)) {
+            if (channel_tab.className.includes("-active")) continue;
+            channel_tab.className += "-active";
+            let tab_label = document.getElementById('tab-label-for-' + String(pure_id));
+            tab_label.className += "-active";
+            let priv_icon = document.getElementById('priv-icon-for-' + String(pure_id));
+            console.log("icon becoming active: id -", priv_icon.id, ": class -", priv_icon.className);
+            priv_icon.setAttribute("stroke", "white");
+            if (priv_icon.getAttribute("fill") != "none") {
+                priv_icon.setAttribute("fill", "white");
+            }
+            console.log("icon became active: id -", priv_icon.id, ": class -", priv_icon.className);
+        } else {
+            channel_tab.className = channel_tab.className.replace("-active", "");
+            let tab_label = document.getElementById('tab-label-for-' + String(pure_id));
+            tab_label.className = tab_label.className.replace("-active", "");
+            let priv_icon = document.getElementById('priv-icon-for-' + String(pure_id));
+            if (priv_icon.getAttribute('class').includes("-active")) {
+                console.log("icon was active: id -", priv_icon.id, ": class -", priv_icon.className);
+            }
+            priv_icon.setAttribute('stroke', "black");
+            if (priv_icon.getAttribute("fill") != "none") {
+                priv_icon.setAttribute("fill", "black");
+            }
+            console.log("icon inactive: id -", priv_icon.id, ": class -", priv_icon.className);
+        }
+    }
+
+    const channel_screen = document.getElementById("channel-screen");
+    channel_screen.style.display = "block";
 
     // console.log("channelId :", channelId);
 
@@ -467,6 +526,22 @@ let open_channel = (channelId) => {
 // Tab that displays a create channel bubble
 const new_channel_tab = document.getElementById("create-channel-tab");
 const display_new_channel_form = () => {
+    // Unpress the tabs
+    let channel_tabs_wrapper = document.getElementById('channel-tabs-wrapper');
+    console.log("Tabs LOOP!!");
+    for (var channel_tab of channel_tabs_wrapper.children) {
+        // Get pure id of channel_tab
+        let pure_id = channel_tab.id.replace("tab-for-", "");
+        channel_tab.className = channel_tab.className.replace("-active", "");
+        let tab_label = document.getElementById('tab-label-for-' + String(pure_id));
+        tab_label.className = tab_label.className.replace("-active", "");
+        let priv_icon = document.getElementById('priv-icon-for-' + String(pure_id));
+        priv_icon.setAttribute('stroke', "black");
+        if (priv_icon.getAttribute("fill") != "none") {
+            priv_icon.setAttribute("fill", "black");
+        }
+    }
+
     const channel_screen = document.getElementById("channel-screen");
     channel_screen.style.display = "none";
     const new_channel_bubble = document.getElementById("new-channel-bubble");
@@ -545,6 +620,7 @@ const create_channel = () => {
             new_channel_desc = "";
             const channel_screen = document.getElementById("channel-screen");
             channel_screen.style.display = "block";
+            display_mainpage();
             open_channel(data['channelId']);
         })
         .catch(err =>  {

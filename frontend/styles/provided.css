@@ -10,6 +10,10 @@ html, body {
     flex-direction: column;
 }
 
+/*********************************************************************/
+/**                          Milestone 1                            **/
+/*********************************************************************/
+
 #login-bubble {
     background-color: white;
     margin-left: 20vw;
@@ -47,6 +51,14 @@ html, body {
     color: red;
 }
 
+/** Important Colours */
+/* For login,signup and top-row background: #bf7aff */
+/* For mainpage background: #dcb7ff */
+
+/*********************************************************************/
+/**                          Milestone 2                            **/
+/*********************************************************************/
+
 #slackr-mainpage {
     background-color: #bf7aff;
     display: flex;
@@ -74,14 +86,53 @@ html, body {
 
 #channels-list {
     background-color: #dcb7ff;
-    width: 10vw;
+    width: 20vw;
 }
 
 #channel-screen {
     background-color: white;
-    width: 90vw;
+    width: 80vw;
+    padding-left: 7px;
+    padding-right: 7px;
 }
 
-/** Important Colours */
-/* For login,signup and top-row background: #bf7aff */
-/* For mainpage background: #dcb7ff */
+.tab {
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+.tab:hover {
+    background-color: #e9daf8;
+}
+
+.channels-tab {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    flex-direction: row;
+}
+
+.channels-tab-active {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    flex-direction: row;
+    background-color: #5b4b6a;
+}
+
+.tab-label {
+    font-size: 1em;
+    margin: 0 0 0 0;
+}
+
+.tab-label-active {
+    font-size: 1em;
+    margin: 0 0 0 0;
+    color: white;
+}
+
+#new-channel-bubble {
+    background: white;
+    width: 80vw;
+    padding: 7px;
+}
