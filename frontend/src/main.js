@@ -349,8 +349,6 @@ const display_mainpage = () => {
                     channel_heading.style.display = "none";
                     channel_heading_wrapper.appendChild(channel_heading);
 
-                    //! MILESTONE 3 - store channel messages
-
                     // Create the tab itself
                     let tab = document.createElement("div");
                     tab.className = "tab channels-tab";
@@ -441,30 +439,33 @@ let open_channel = (channelId) => {
             let tab_label = document.getElementById('tab-label-for-' + String(pure_id));
             tab_label.className += "-active";
             let priv_icon = document.getElementById('priv-icon-for-' + String(pure_id));
-            console.log("icon becoming active: id -", priv_icon.id, ": class -", priv_icon.className);
+            // console.log("icon becoming active: id -", priv_icon.id, ": class -", priv_icon.className);
             priv_icon.setAttribute("stroke", "white");
             if (priv_icon.getAttribute("fill") != "none") {
                 priv_icon.setAttribute("fill", "white");
             }
-            console.log("icon became active: id -", priv_icon.id, ": class -", priv_icon.className);
+            // console.log("icon became active: id -", priv_icon.id, ": class -", priv_icon.className);
         } else {
             channel_tab.className = channel_tab.className.replace("-active", "");
             let tab_label = document.getElementById('tab-label-for-' + String(pure_id));
             tab_label.className = tab_label.className.replace("-active", "");
             let priv_icon = document.getElementById('priv-icon-for-' + String(pure_id));
-            if (priv_icon.getAttribute('class').includes("-active")) {
-                console.log("icon was active: id -", priv_icon.id, ": class -", priv_icon.className);
-            }
+            // if (priv_icon.getAttribute('class').includes("-active")) {
+            //     console.log("icon was active: id -", priv_icon.id, ": class -", priv_icon.className);
+            // }
             priv_icon.setAttribute('stroke', "black");
             if (priv_icon.getAttribute("fill") != "none") {
                 priv_icon.setAttribute("fill", "black");
             }
-            console.log("icon inactive: id -", priv_icon.id, ": class -", priv_icon.className);
+            // console.log("icon inactive: id -", priv_icon.id, ": class -", priv_icon.className);
         }
     }
 
+    //! Milestone 3 - Display channel msgs
+    display_channel_msgs(channelId);
+
     const channel_screen = document.getElementById("channel-screen");
-    channel_screen.style.display = "block";
+    channel_screen.style.display = "flex";
 
     // console.log("channelId :", channelId);
 
@@ -619,7 +620,7 @@ const create_channel = () => {
             new_channel_name = "";
             new_channel_desc = "";
             const channel_screen = document.getElementById("channel-screen");
-            channel_screen.style.display = "block";
+            channel_screen.style.display = "flex";
             display_mainpage();
             open_channel(data['channelId']);
         })
@@ -635,7 +636,7 @@ let close_new_channel_form = () => {
     const new_channel_bubble = document.getElementById("new-channel-bubble");
     new_channel_bubble.style.display = "none";
     const channel_screen = document.getElementById("channel-screen");
-    channel_screen.style.display = "block";
+    channel_screen.style.display = "flex";
 }
 close_new_channel_form_button.onclick = close_new_channel_form;
 
@@ -722,7 +723,7 @@ const get_channels = () => {
                 throw new Error(`Error: ${res.status}`);
             }
         })
-        .then (data => {
+        .then(data => {
             // console.log('Success:', data);
         })
         .catch(err => {
@@ -735,6 +736,90 @@ const get_channels = () => {
 //********************************************************************/
 // Function that displays channel messages
 const display_channel_msgs = (channelId) => {
-    // TODO
-    return;
+    
+    let channel_messages = document.getElementById("channel-messages");
+    //! Kill all children heehaw
+    while (channel_messages.firstChild) {
+        channel_messages.removeChild(channel_messages.lastChild);
+    }
+
+    fetch(url + "/message/" + channelId, {
+        method: "GET",
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+        }
+    })
+        .then(res => {
+            if (res.ok) {
+                return res.json();
+            } else {
+                throw new Error(`Error: ${res.status}`);
+            }
+        })
+        .then(data => {
+            console.log('Success:', data);
+            for (var msg in data["messages"]) {
+
+                // Each message bubble contains ...
+                let msg_bubble = document.createElement("div");
+                msg_bubble.id = msg["id"];
+                msg_bubble.className = "msg-bubble";
+                
+                // (break into 3 parts:
+                //      1. Msg details
+                //      2. Msg itself
+                //      3. Reacts
+                // )
+                let msg_details = document.createElement("div");
+
+                // Sender's name
+                let sender_name = document.createElement("h5");
+                sender_name.className = "sender-name";
+                get_user_details(msg["sender"]).then((inner_data) => {
+                    sender_name.textContent = inner_data["name"];
+                });
+                msg_details.appendChild(sender_name);
+
+                // Sent time
+                let sent_time = document.createElement("h6");
+                sent_time.className = "sent-time";
+                let date_time = new Date(data["sentAt"]);
+                // If sent on same day or yesterday --> show time
+                // Else just show date
+                if (is_today(date_time)) {
+                    sent_time.textContent = "Today at " + ("0" + date_time.getHours()).slice(-2) + ":" + ("0" + date_time.getMinutes()).slice(-2);
+                } else if (is_yesterday(date_time)) {
+                    sent_time.textContent = "Yesterday at " + ("0" + date_time.getHours()).slice(-2) + ":" + ("0" + date_time.getMinutes()).slice(-2);
+                } else {
+                    sent_time.textContent = ("0" + date_time.getDate()).slice(-2) + "/" + ("0" + (date_time.getMonth() + 1)).slice(-2) + "/" + date_time.getFullYear();
+                }
+                // Edited time --> Just peg it on the end of sent_time
+                if (msg["edited"]) {
+                    let line_break = document.createElement("br");
+                    msg_details.appendChild(line_break);
+                    let edit_time = new Date(date["editedAt"]);
+                    sent_time.textContent += ", edited " + ("0" + date_time.getHours()).slice(-2) + ":" + ("0" + date_time.getMinutes()).slice(-2) + ("0" + date_time.getDate()).slice(-2) + "/" + ("0" + (date_time.getMonth() + 1)).slice(-2) + "/" + date_time.getFullYear();
+
+                }
+                msg_details.appendChild(sent_time);
+
+            }
+        })
+        .catch(err => {
+            console.log("Error: ", err);
+        });
+}
+
+// Helper boolean if date is today
+const is_today = (date) => {
+    let rn = new Date();
+    return rn.toDateString() === date.toDateString();
+}
+
+// Helper boolean if date is yesterday
+const is_yesterday = (date) => {
+    let yes = new Date();
+    yes.setDate(yes.getDate() - 1);
+    return yes.toDateString() === date.toDateString();
 }

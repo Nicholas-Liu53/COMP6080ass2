@@ -73,6 +73,7 @@ html, body {
 #buttons-and-links-at-end {
     display: flex;
     justify-content: flex-end;
+    margin-bottom: 3px;
 }
 
 #signout-button {
@@ -81,19 +82,15 @@ html, body {
 
 #main-bottom-content {
     display: flex;
+    background-color: white;
     /* flex-direction: row; */
+    outline: purple solid 2px;
 }
 
 #channels-list {
     background-color: #dcb7ff;
     width: 20vw;
-}
-
-#channel-screen {
-    background-color: white;
-    width: 80vw;
-    padding-left: 7px;
-    padding-right: 7px;
+    border-right: purple solid 2px;
 }
 
 .tab {
@@ -131,8 +128,63 @@ html, body {
     color: white;
 }
 
+#create-channel-tab {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    text-align: center;
+}
+
+#channel-screen {
+    background-color: white;
+    width: 80vw;
+    padding-left: 7px;
+    padding-right: 7px;
+    padding-top: 7px;
+    padding-bottom: 7px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+#channel-heading-wrapper {
+    outline: 2px solid black;
+    padding-left: 3px;
+}
+
+#channel-messages {
+    outline: 1px solid gray;
+}
+
+#message-box-area {
+    display: flex;
+    align-items: flex-start;
+    flex-direction: row;
+    position: relative;
+    justify-content: flex-start;
+    width: 75vw;
+    height: max-content;
+}
+
+#message-box {
+    /* position: absolute; */
+    resize: none;
+    width: 90%;
+}
+
+#send-msg-button {
+    display: block;
+    /* position: absolute; */
+    height: 52.5px;
+    width: fit-content;
+}
+
 #new-channel-bubble {
     background: white;
     width: 80vw;
     padding: 7px;
 }
+
+/*********************************************************************/
+/**                          Milestone 3                            **/
+/*********************************************************************/
