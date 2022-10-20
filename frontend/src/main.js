@@ -97,7 +97,7 @@ let signup_name_handler = (event) => {
     signup_name = event.target.value;
     // console.log("Signup Name: " + signup_name);
 }
-signup_name.addEventListener('change', signup_name_handler);``
+signup_name.addEventListener('change', signup_name_handler);
 // Signup password
 let signup_password = signup_form.password_su;
 let signup_password_handler = (event) => {
@@ -264,8 +264,7 @@ const display_mainpage = () => {
         method: "GET",
         headers: {
             'Authorization': 'Bearer ' + token,
-            'Content-Type': 'application/json',
-            'userId': user_id
+            'Content-Type': 'application/json'
         }
     })
         .then(res => {
@@ -429,7 +428,7 @@ let open_channel = (channel_id) => {
     }
     // To make tab pressed
     let channel_tabs_wrapper = document.getElementById('channel-tabs-wrapper');
-    console.log("Tabs LOOP!!");
+    // console.log("Tabs LOOP!!");
     for (var channel_tab of channel_tabs_wrapper.children) {
         // Get pure id of channel_tab
         let pure_id = channel_tab.id.replace("tab-for-", "");
@@ -464,9 +463,8 @@ let open_channel = (channel_id) => {
     //! Milestone 3 - Display channel msgs
     display_channel_msgs(channel_id);
 
-    //! Milestone 3 - Set send button for this channel
-    let send_button = document.getElementById("send-msg-button");
-    send_button.onclick = send_message(channel_id);
+    //! Milestone 3 - Update send button for this channel
+    update_send_button(channel_id);
 
     //! Milestone 3 - Clear the message box
     document.getElementById("message-box").value = "";
@@ -597,8 +595,7 @@ const get_user_details = (user_id_arg) => {
         method: "GET",
         headers: {
             'Authorization': 'Bearer ' + token,
-            'Content-Type': 'application/json',
-            'userId': user_id_arg
+            'Content-Type': 'application/json'
         }
     })
         .then(res => {
@@ -630,8 +627,7 @@ const get_channel_details = (channel_id) => {
         method: "GET",
         headers: {
             'Authorization': 'Bearer ' + token,
-            'Content-Type': 'application/json',
-            'channelId': channel_id
+            'Content-Type': 'application/json'
         }
     })
         .then(res => {
@@ -685,10 +681,15 @@ const get_channels = () => {
 //********************************************************************/
 //**                         Milestone 3                            **/
 //********************************************************************/
-// Function that displays channel messages
-//! This function is too phat --> break it up into smaller functions
+
+// Some message global variables xd
 let current_page_index = 0;
 let pages_array = [];
+let num_pages = 0;
+let msgs_fetch_done = false;
+
+// Function that displays channel messages
+//! This function is too phat --> break it up into smaller functions
 const display_channel_msgs = (channel_id) => {
     
     let channel_messages = document.getElementById("channel-messages");
@@ -699,88 +700,127 @@ const display_channel_msgs = (channel_id) => {
 
     //* Pagination happens here
     // To do pagination you need the number of *total* msgs
-    
-    let num_msgs_on_page = 25;
-    let msg_index = 0;
-    let num_pages = 0;
-
-    // get channel_messages
 
     // Pages array will be an array of HTML elements
     pages_array = [];
-    while (num_msgs_on_page == 25) {
-        fetch(url + "/message/" + channel_id, {
-            method: "GET",
-            headers: {
-                'Authorization': 'Bearer ' + token,
-                'Content-Type': 'application/json',
-                'channelId': channel_id,
-                'start': msg_index
-            }
-        })
-            .then(res => {
-                if (res.ok) {
-                    return res.json();
-                } else {
-                    throw new Error(`Error: ${res.status}`);
-                }
-            })
-            .then(data => {
-                // console.log('Success:', data);
+    num_pages = 0;
 
-                // Keep track how many messages on page
-                num_msgs_on_page = data["messages"].length;
-                
-                // Create a page
-                let msg_page = document.createElement('div');
-                msg_page.className = "msg-page";
+    // Putting fetch in a while loop is death
+    // So I used recursion instead
+    msgs_fetch_done = false;
+    generate_msg_pages_recursion(channel_id, 0);
+    console.log("number of pages: " + num_pages);
+}
 
-                // Load in the messages
-                //? Note: The msgs come from most recent to earliest so you would want
-                //?       the last msgs to be appended first
-                for (var msg in ImmuteableList.copyOf(data["messages"]).reverse()) {
-                    load_msg_bubble_onto_page(msg_page, msg);
-                }
-
-                //? Note: Since the most recent msgs come first
-                //?       --> Display first page ONLY (flex)
-                if (num_pages > 0) {
-                    msg_page.style.display = "none";
-                } else {
-                    msg_page.style.display = "flex";
-                }
-
-                // Push the page reference into the pages_array
-                pages_array.push(msg_page);
-
-                // msg_page becomes a child of channel_messages
-                channel_messages.appendChild(msg_page);
-            })
-            .catch(err => {
-                console.log('Error:', err);
-            });
-        
-        msg_index += 25;
-        num_pages++;
-    }
-
-    //! Make it view from the bottom
-
+// Function that updates the paginator
+const update_paginator = () => {
     // Link to pagination navigator
     current_page_index = 0;
+
+    // console.log("Doesn't this exist?", document.getElementById("page-indicator"));
+
     // Update page indicator in navi
-    document.getElementById("page-indicator").textContent = "Page " + String(current_page_index + 1) + " of " + String(num_pages);
+    let first_page_num = num_pages ? String(current_page_index + 1) : String(0);
+    document.getElementById("page-indicator").textContent = "Page " + first_page_num + " of " + String(num_pages);
     // Toggle buttons
     document.getElementById("more-recent-button").setAttribute("disabled", "");
     document.getElementById("more-recent-button").removeAttribute("enabled");
 
-    if (num_pages == 1) { 
+    if (num_pages <= 1) { 
         document.getElementById("earlier-button").setAttribute("disabled", "");
         document.getElementById("earlier-button").removeAttribute("enabled");
     } else {
         document.getElementById("earlier-button").setAttribute("enabled", "");
         document.getElementById("earlier-button").removeAttribute("disabled");
     }
+}
+
+// Function that recursively generates a page of messages
+// The function also conveniently returns the number of pages it created
+const generate_msg_pages_recursion = (channel_id, msg_index) => {
+    
+    let num_msgs_on_page = 0;
+
+    let channel_messages = document.getElementById('channel-messages');
+
+    // console.log("Parameters check:", channel_id, msg_index);
+
+    fetch(url + "/message/" + channel_id + "?" + new URLSearchParams({
+        start: msg_index
+    }), {
+        method: "GET",
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+        }
+    })
+        .then(res => {
+            if (res.ok) {
+                return res.json();
+            } else {
+                throw new Error(`Error: ${res.status}`);
+            }
+        })
+        .then(data => {
+            // console.log('Success:', data);
+            
+            // Keep track how many messages on page
+            num_msgs_on_page = data["messages"].length;
+            
+            // console.log('num_msgs_on_page:', num_msgs_on_page);
+            
+            // Create a page
+            let msg_page = document.createElement('div');
+            msg_page.className = "msg-page";
+
+            // Load in the messages
+            //? Note: The msgs come from most recent to earliest so you would want
+            //?       the last msgs to be appended first
+            let data_msgs_dup = data["messages"];
+
+            // console.log("I made it here");
+
+            // console.log(data_msgs_dup);
+            for (var msg of data_msgs_dup.reverse()) {
+                // console.log(msg);
+                load_msg_bubble_onto_page(msg_page, msg);
+            }
+
+            // console.log("I made it here x 2");
+
+
+            //? Note: Since the most recent msgs come first
+            //?       --> Display first page ONLY (flex)
+            if (num_pages > 0) {
+                msg_page.style.display = "none";
+            } else {
+                msg_page.style.display = "flex";
+            }
+
+            // Push the page reference into the pages_array
+            pages_array.push(msg_page);
+
+            // msg_page becomes a child of channel_messages
+            channel_messages.appendChild(msg_page);
+
+            // If no messages then should have 0 pages
+            if (data["messages"].length) {
+                num_pages++;
+            }
+
+            // Recursive case --> if there's 25 messages in the page
+            if (num_msgs_on_page == 25) {
+                generate_msg_pages_recursion(channel_id, msg_index + 25);
+            } else {
+                msgs_fetch_done = true;
+                update_paginator();
+            }
+            
+            // Otherwise, done
+        })
+        .catch(err => {
+            console.log('Error:', err);
+        });
 }
 
 // Function to display a different page
@@ -808,7 +848,7 @@ const display_new_page = (new_index) => {
         document.getElementById("earlier-button").removeAttribute("disabled");
     }
 
-    if (new_index == num_pages - 1) {
+    if (new_index >= num_pages - 1) {
         document.getElementById("more-recent-button").setAttribute("disabled", "");
         document.getElementById("more-recent-button").removeAttribute("enabled");
     } else {
@@ -816,8 +856,8 @@ const display_new_page = (new_index) => {
         document.getElementById("more-recent-button").removeAttribute("disabled");
     }
 }
-document.getElementById("earlier-button").onclick = display_new_page(current_page_index + 1);
-document.getElementById("more-recent-button").onclick = display_new_page(current_page_index - 1);
+document.getElementById("earlier-button").onclick = () => display_new_page(current_page_index + 1);
+document.getElementById("more-recent-button").onclick = () => display_new_page(current_page_index - 1);
 
 
 // Helper boolean if date is today
@@ -834,9 +874,10 @@ const is_yesterday = (date) => {
 }
 
 // Function that sends messages 
+let send_button = document.getElementById("send-msg-button");
 const send_message = (channel_id) => {
 
-    let msg = document.createElementById("message-box").value;
+    let msg = document.getElementById("message-box").value;
 
     // String only contains whitespace
     if (msg.replace(/\s/g, '').length == 0) {
@@ -857,8 +898,7 @@ const send_message = (channel_id) => {
         method: "POST",
         headers: {
             'Authorization': 'Bearer ' + token,
-            'Content-Type': 'application/json',
-            'channelId': channel_id
+            'Content-Type': 'application/json'
         },
         body: JSON.stringify(data)
     })
@@ -879,6 +919,13 @@ const send_message = (channel_id) => {
             console.log("Error:", err);
         });
 }
+// send_button.onclick = send_message(0);
+
+// Function that updates which channel the send button sends messages to
+const update_send_button = (channel_id) => {
+    send_button.onclick = () => send_message(channel_id);
+}
+
 
 // Function that delete messages
 //! This function has to be binded to a button in load_msg_bubble_onto_page
@@ -887,9 +934,7 @@ const delete_message = (channel_id, msg_id) => {
         method: "DELETE",
         headers: {
             'Authorization': 'Bearer ' + token,
-            'Content-Type': 'application/json',
-            'channelId': channel_id,
-            'messageId': msg_id
+            'Content-Type': 'application/json'
         }
     })
         .then(res => {
@@ -954,6 +999,7 @@ const update_message = (channel_id, msg_id) => {
 // Helper function that loads msg bubble onto page
 const load_msg_bubble_onto_page = (msg_page, msg) => {
     
+
     // Each message bubble contains ...
     let msg_bubble = document.createElement("div");
     msg_bubble.id = msg["id"];
@@ -966,12 +1012,15 @@ const load_msg_bubble_onto_page = (msg_page, msg) => {
     //      3. Reacts
 
     let msg_details = document.createElement("div");
+    msg_details.className = "msg-details";
 
     //! Peg on dp first to msg_details
 
     // Sender's name
     let sender_name = document.createElement("h5");
     sender_name.className = "sender-name";
+    // console.log(msg);
+    // console.log(msg["sender"]);
     get_user_details(msg["sender"]).then((inner_data) => {
         sender_name.textContent = inner_data["name"];
     });
@@ -1002,6 +1051,7 @@ const load_msg_bubble_onto_page = (msg_page, msg) => {
 
     // The message itself
     let msg_itself = document.createElement("p");
+    msg_itself.className = "msg-itself";
     msg_itself.id = "msg text of " + msg["id"];
     msg_itself.textContent = msg["message"];
     msg_bubble.appendChild(msg_itself);
