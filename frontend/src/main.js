@@ -14,7 +14,7 @@ const months = ["January", "February", "March", "April", "May", "June", "July", 
 
 //* Form variables *//
 var token;
-var userId;
+var user_id;
 let login_form = document.forms.login_form;
 let signup_form = document.forms.signup_form;
 let new_channel_form = document.forms.new_channel_form;
@@ -64,7 +64,7 @@ const submit_login = (event) => {
             // console.log("Success: ", data);
             // Store the token and userId
             token = data["token"];
-            userId = data["userId"];
+            user_id = data["userId"];
             // Clear the form inputs (SECURITY REASONS)
             login_email = "";
             login_password = "";
@@ -151,7 +151,7 @@ const submit_signup = (event) => {
             // console.log('Success:', data);
             // Store the token and userId
             token = data["token"];
-            userId = data["userId"];
+            user_id = data["userId"];
             // Clear the form inputs (SECURITY REASONS)
             signup_email = "";
             signup_name = "";
@@ -260,12 +260,12 @@ const display_mainpage = () => {
 
     // Do the channel banner
     var users_name;
-    fetch(url + "/user/" + userId, {
+    fetch(url + "/user/" + user_id, {
         method: "GET",
         headers: {
             'Authorization': 'Bearer ' + token,
             'Content-Type': 'application/json',
-            'userId': userId
+            'userId': user_id
         }
     })
         .then(res => {
@@ -313,7 +313,7 @@ const display_mainpage = () => {
             }
             for (var channel of data["channels"]) {
                 // console.log("channel: ", channel);
-                if (!channel["private"] || channel["members"].includes(userId)) {
+                if (!channel["private"] || channel["members"].includes(user_id)) {
 
                     // Store the channel id here to avoid weird pointer quirks
                     let locally_channel_id = channel["id"];
@@ -414,17 +414,17 @@ const hide_mainpage = () => {
 }
 
 // Opening the channel
-let open_channel = (channelId) => {
+let open_channel = (channel_id) => {
     
     //! If new channel form is open, close it
     let new_channel_bubble = document.getElementById("new-channel-bubble");
     new_channel_bubble.style.display = "none";
 
-    console.log("open_channel be opening: ", channelId);
+    console.log("open_channel be opening: ", channel_id);
 
     let channel_heading_wrapper = document.getElementById('channel-heading-wrapper');
     for (var channel_heading of channel_heading_wrapper.children) {
-        channel_heading.style.display = channel_heading.id == ("channel-heading-for-" + channelId) ? "inline-block" : "none";
+        channel_heading.style.display = channel_heading.id == ("channel-heading-for-" + channel_id) ? "inline-block" : "none";
         
     }
     // To make tab pressed
@@ -433,7 +433,7 @@ let open_channel = (channelId) => {
     for (var channel_tab of channel_tabs_wrapper.children) {
         // Get pure id of channel_tab
         let pure_id = channel_tab.id.replace("tab-for-", "");
-        if (channel_tab.id == ("tab-for-" + channelId)) {
+        if (channel_tab.id == ("tab-for-" + channel_id)) {
             if (channel_tab.className.includes("-active")) continue;
             channel_tab.className += "-active";
             let tab_label = document.getElementById('tab-label-for-' + String(pure_id));
@@ -462,11 +462,11 @@ let open_channel = (channelId) => {
     }
 
     //! Milestone 3 - Display channel msgs
-    display_channel_msgs(channelId, 0);
+    display_channel_msgs(channel_id);
 
     //! Milestone 3 - Set send button for this channel
     let send_button = document.getElementById("send-msg-button");
-    send_button.onclick = send_message(channelId);
+    send_button.onclick = send_message(channel_id);
 
     //! Milestone 3 - Clear the message box
     document.getElementById("message-box").value = "";
@@ -592,13 +592,13 @@ let close_new_channel_form = () => {
 close_new_channel_form_button.onclick = close_new_channel_form;
 
 // Helper function that finds details about a user
-const get_user_details = (userId) => {
-    return fetch(url + "/user/" + userId, {
+const get_user_details = (user_id_arg) => {
+    return fetch(url + "/user/" + user_id_arg, {
         method: "GET",
         headers: {
             'Authorization': 'Bearer ' + token,
             'Content-Type': 'application/json',
-            'userId': userId
+            'userId': user_id_arg
         }
     })
         .then(res => {
@@ -625,13 +625,13 @@ const get_user_details = (userId) => {
 }
 
 // Helper function that finds details about a channel
-const get_channel_details = (channelId) => {
-    return fetch(url + "/channel/" + channelId, {
+const get_channel_details = (channel_id) => {
+    return fetch(url + "/channel/" + channel_id, {
         method: "GET",
         headers: {
             'Authorization': 'Bearer ' + token,
             'Content-Type': 'application/json',
-            'channelId': channelId
+            'channelId': channel_id
         }
     })
         .then(res => {
@@ -686,7 +686,10 @@ const get_channels = () => {
 //**                         Milestone 3                            **/
 //********************************************************************/
 // Function that displays channel messages
-const display_channel_msgs = (channelId, startIndex) => {
+//! This function is too phat --> break it up into smaller functions
+let current_page_index = 0;
+let pages_array = [];
+const display_channel_msgs = (channel_id) => {
     
     let channel_messages = document.getElementById("channel-messages");
     //! Kill all children heehaw
@@ -694,175 +697,128 @@ const display_channel_msgs = (channelId, startIndex) => {
         channel_messages.removeChild(channel_messages.lastChild);
     }
 
-    fetch(url + "/message/" + channelId, {
-        method: "GET",
-        headers: {
-            'Authorization': 'Bearer ' + token,
-            'Content-Type': 'application/json',
-            'channelId': channelId,
-            'start': startIndex
-        }
-    })
-        .then(res => {
-            if (res.ok) {
-                return res.json();
-            } else {
-                throw new Error(`Error: ${res.status}`);
+    //* Pagination happens here
+    // To do pagination you need the number of *total* msgs
+    
+    let num_msgs_on_page = 25;
+    let msg_index = 0;
+    let num_pages = 0;
+
+    // get channel_messages
+
+    // Pages array will be an array of HTML elements
+    pages_array = [];
+    while (num_msgs_on_page == 25) {
+        fetch(url + "/message/" + channel_id, {
+            method: "GET",
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json',
+                'channelId': channel_id,
+                'start': msg_index
             }
         })
-        .then(data => {
-            console.log('Success:', data);
-            let channel_messages = document.getElementById("channel-messages");
-            for (var msg in data["messages"]) {
-
-
-                // Each message bubble contains ...
-                let msg_bubble = document.createElement("div");
-                msg_bubble.id = msg["id"];
-                msg_bubble.className = "msg-bubble";
-                
-                // SIDENOTE - break into 3 parts:
-                //      1. Msg details
-                //      2. Msg itself
-                //      3. Reacts
-
-                let msg_details = document.createElement("div");
-
-                //! Peg on dp first to msg_details
-
-                // Sender's name
-                let sender_name = document.createElement("h5");
-                sender_name.className = "sender-name";
-                get_user_details(msg["sender"]).then((inner_data) => {
-                    sender_name.textContent = inner_data["name"];
-                });
-                msg_details.appendChild(sender_name);
-
-                // Sent time
-                let sent_time = document.createElement("h6");
-                sent_time.className = "sent-time";
-                let date_time = new Date(msg["sentAt"]);
-                // If sent on same day or yesterday --> show time
-                // Else just show date
-                if (is_today(date_time)) {
-                    sent_time.textContent = "Today at " + ("0" + date_time.getHours()).slice(-2) + ":" + ("0" + date_time.getMinutes()).slice(-2);
-                } else if (is_yesterday(date_time)) {
-                    sent_time.textContent = "Yesterday at " + ("0" + date_time.getHours()).slice(-2) + ":" + ("0" + date_time.getMinutes()).slice(-2);
+            .then(res => {
+                if (res.ok) {
+                    return res.json();
                 } else {
-                    sent_time.textContent = ("0" + date_time.getDate()).slice(-2) + "/" + ("0" + (date_time.getMonth() + 1)).slice(-2) + "/" + date_time.getFullYear();
+                    throw new Error(`Error: ${res.status}`);
                 }
-                // Edited time --> Just peg it on the end of sent_time
-                if (msg["edited"]) {
-                    let line_break = document.createElement("br");
-                    msg_details.appendChild(line_break);
-                    let edit_time = new Date(date["editedAt"]);
-                    sent_time.textContent += ", edited " + ("0" + edit_time.getHours()).slice(-2) + ":" + ("0" + edit_time.getMinutes()).slice(-2) + " " + ("0" + edit_time.getDate()).slice(-2) + "/" + ("0" + (edit_time.getMonth() + 1)).slice(-2) + "/" + edit_time.getFullYear();
-                }
-                msg_details.appendChild(sent_time);
-                msg_bubble.appendChild(msg_details);
+            })
+            .then(data => {
+                // console.log('Success:', data);
 
-                // The message itself
-                let msg_itself = document.createElement("p");
-                msg_itself.textContent = msg["message"];
-                msg_bubble.appendChild(msg_itself);
-
+                // Keep track how many messages on page
+                num_msgs_on_page = data["messages"].length;
                 
-                // Reactions
-                //! This part's time complexity is scuffed
-                //! so just comment it out when testing other stuff
-                let msg_reactions = document.createElement("div");
+                // Create a page
+                let msg_page = document.createElement('div');
+                msg_page.className = "msg-page";
 
-                let string_reaction_bubble = document.createElement("div");
-
-                string_reaction_bubble.className = "string-reaction-bubble";
-                //! Insert emoji icon for bubble
-                let string_reaction_popup = document.createElement("span");
-                string_reaction_popup.textContent = "No reacts";
-
-                let boolean_reaction_bubble = document.createElement("div");
-                //! Insert emoji icon for bubble
-                boolean_reaction_bubble.className = "boolean-reaction-bubble";
-                let boolean_reaction_popup = document.createElement("span");
-                boolean_reaction_popup.textContent = "No reacts";
-
-                let number_reaction_bubble = document.createElement("div");
-                //! Insert emoji icon for bubble
-                number_reaction_bubble.className = "number-reaction-bubble";
-                let number_reaction_popup = document.createElement("span");
-                number_reaction_popup.textContent = "No reacts";
-
-                let react_string_counter = 0;
-                let react_boolean_counter = 0;
-                let react_number_counter = 0;
-
-                for (var reaction of msg["react"]) {
-                    
-                    // get the name of the reactor
-                    var reactorUserName;
-                    get_user_details(reaction["user"]).then((inner_data) => {
-                        reactorUserName = inner_data["name"];
-                    });
-
-                    if (reaction["react"] === "string") {
-                        if (react_string_counter == 0) {
-                            string_reaction_popup.textContent = reactorUserName;
-                        } else if (react_string_counter == 1) {
-                            string_reaction_popup.textContent = reactorUserName + " and " + string_reaction_popup.textContent;
-                        } else {
-                            string_reaction_popup.textContent = reactorUserName + ", " + string_reaction_popup.textContent;
-                        }
-                        react_string_counter++;
-                    }
-                    if (reaction["react"] === "boolean") {
-                        if (react_boolean_counter == 0) {
-                            boolean_reaction_popup.textContent = reactorUserName;
-                        } else if (react_boolean_counter == 1) {
-                            boolean_reaction_popup.textContent = reactorUserName + " and " + boolean_reaction_popup.textContent;
-                        } else {
-                            boolean_reaction_popup.textContent = reactorUserName + ", " + boolean_reaction_popup.textContent;
-                        }
-                        react_boolean_counter++;
-                    }
-                    if (reaction["react"] === "number") {
-                        if (react_number_counter == 0) {
-                            number_reaction_popup.textContent = reactorUserName;
-                        } else if (react_number_counter == 1) {
-                            number_reaction_popup.textContent = reactorUserName + " and " + number_reaction_popup.textContent;
-                        } else {
-                            number_reaction_popup.textContent = reactorUserName + ", " + number_reaction_popup.textContent;
-                        }
-                        react_number_counter++;
-                    }
+                // Load in the messages
+                //? Note: The msgs come from most recent to earliest so you would want
+                //?       the last msgs to be appended first
+                for (var msg in ImmuteableList.copyOf(data["messages"]).reverse()) {
+                    load_msg_bubble_onto_page(msg_page, msg);
                 }
 
-                let string_reaction_count = document.createElement("h6");
-                string_reaction_count.textContent = String(react_string_counter);
-                string_reaction_bubble.appendChild(string_reaction_count);
-                string_reaction_bubble.appendChild(string_reaction_popup);
+                //? Note: Since the most recent msgs come first
+                //?       --> Display first page ONLY (flex)
+                if (num_pages > 0) {
+                    msg_page.style.display = "none";
+                } else {
+                    msg_page.style.display = "flex";
+                }
 
-                let boolean_reaction_count = document.createElement("h6");
-                boolean_reaction_count.textContent = String(react_boolean_counter);
-                boolean_reaction_bubble.appendChild(boolean_reaction_count);
-                boolean_reaction_bubble.appendChild(boolean_reaction_popup);
-                
-                let number_reaction_count = document.createElement("h6");
-                number_reaction_count.textContent = String(react_number_counter);
-                number_reaction_bubble.appendChild(number_reaction_count);
-                number_reaction_bubble.appendChild(number_reaction_popup);
+                // Push the page reference into the pages_array
+                pages_array.push(msg_page);
 
-                msg_reactions.appendChild(string_reaction_bubble);
-                msg_reactions.appendChild(boolean_reaction_bubble);
-                msg_reactions.appendChild(number_reaction_bubble);
+                // msg_page becomes a child of channel_messages
+                channel_messages.appendChild(msg_page);
+            })
+            .catch(err => {
+                console.log('Error:', err);
+            });
+        
+        msg_index += 25;
+        num_pages++;
+    }
 
-                msg_bubble.appendChild(msg_reactions);
+    //! Make it view from the bottom
 
-                channel_messages.appendChild(msg_bubble);
-            }
-        })
-        .catch(err => {
-            console.log("Error: ", err);
-        });
+    // Link to pagination navigator
+    current_page_index = 0;
+    // Update page indicator in navi
+    document.getElementById("page-indicator").textContent = "Page " + String(current_page_index + 1) + " of " + String(num_pages);
+    // Toggle buttons
+    document.getElementById("more-recent-button").setAttribute("disabled", "");
+    document.getElementById("more-recent-button").removeAttribute("enabled");
+
+    if (num_pages == 1) { 
+        document.getElementById("earlier-button").setAttribute("disabled", "");
+        document.getElementById("earlier-button").removeAttribute("enabled");
+    } else {
+        document.getElementById("earlier-button").setAttribute("enabled", "");
+        document.getElementById("earlier-button").removeAttribute("disabled");
+    }
 }
+
+// Function to display a different page
+const display_new_page = (new_index) => {
+    
+    if (new_index < num_pages - 1) {
+        pages_array[new_index + 1].style.display = "none";
+    }
+    if (new_index > 0) {
+        pages_array[new_index - 1].style.display = "none";
+    }
+    pages_array[new_index].style.display = "flex";
+
+    //! Make it view from the bottom
+
+    // Update page indicator in navi
+    document.getElementById("page-indicator").textContent = "Page " + String(num_pages - new_index) + " of " + String(num_pages);
+
+    // Disable/Enable buttons
+    if (new_index == 0) { 
+        document.getElementById("earlier-button").setAttribute("disabled", "");
+        document.getElementById("earlier-button").removeAttribute("enabled");
+    } else {
+        document.getElementById("earlier-button").setAttribute("enabled", "");
+        document.getElementById("earlier-button").removeAttribute("disabled");
+    }
+
+    if (new_index == num_pages - 1) {
+        document.getElementById("more-recent-button").setAttribute("disabled", "");
+        document.getElementById("more-recent-button").removeAttribute("enabled");
+    } else {
+        document.getElementById("more-recent-button").setAttribute("enabled", "");
+        document.getElementById("more-recent-button").removeAttribute("disabled");
+    }
+}
+document.getElementById("earlier-button").onclick = display_new_page(current_page_index + 1);
+document.getElementById("more-recent-button").onclick = display_new_page(current_page_index - 1);
+
 
 // Helper boolean if date is today
 const is_today = (date) => {
@@ -878,22 +834,31 @@ const is_yesterday = (date) => {
 }
 
 // Function that sends messages 
-const send_message = (channelId) => {
+const send_message = (channel_id) => {
 
     let msg = document.createElementById("message-box").value;
 
-    let data = {
-        "message": msg,
-        "image": ""
+    // String only contains whitespace
+    if (msg.replace(/\s/g, '').length == 0) {
+        // Pull a messenger and just empty the textbox
+        document.getElementById("message-box").value = "";
+        return;
     }
 
-    document.createElementById("message-box").value = "";
+    let data = {
+        "message": msg,
+        "image": "" //! Do smth about this later
+    }
 
-    fetch(url + /message/ + channelId, {
+    // Clear the textbox when sending
+    document.getElementById("message-box").value = "";
+
+    fetch(url + /message/ + channel_id, {
         method: "POST",
         headers: {
             'Authorization': 'Bearer ' + token,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'channelId': channel_id
         },
         body: JSON.stringify(data)
     })
@@ -906,9 +871,239 @@ const send_message = (channelId) => {
         })
         .then(data => {
             console.log('Success:', data);
-            //! Need to do smth about the view
+            // This data variable literally contains nothing so
+            // just redisplay the entire channel messages
+            display_channel_msgs(channel_id);
         })
         .catch(err => {
             console.log("Error:", err);
         });
+}
+
+// Function that delete messages
+//! This function has to be binded to a button in load_msg_bubble_onto_page
+const delete_message = (channel_id, msg_id) => {
+    fetch(url + "/messages/" + channel_id + "/" + msg_id, {
+        method: "DELETE",
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json',
+            'channelId': channel_id,
+            'messageId': msg_id
+        }
+    })
+        .then(res => {
+            if (res.ok) {
+                return res.json();
+            } else {
+                throw new Error(`Error: ${res.status}`);
+            }
+        })
+        .then (data => {
+            console.log('Success:', data);
+            // This data variable contains nothing
+            // just redisplay the entire channel messages
+            display_channel_msgs(channel_id);
+        })
+        .catch(err => {
+            console.log('Error:', err);
+        })
+}
+
+// Function that updates messages
+//! This function has to be binded to a button in load_msg_bubble_onto_page
+//! 
+const update_message = (channel_id, msg_id) => {
+    
+
+
+    //! Need to be able to read in edited msg/image
+    let data = {
+        'message': new_message,
+        'image': new_image
+    }
+
+    fetch(url + "/messages/" + channel_id + "/" + msg_id, {
+        method: "PUT",
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json',
+            'channelId': channel_id,
+            'messageId': msg_id
+        },
+        body: JSON.stringify(data)
+    })
+        .then(res => {
+            if (res.ok) {
+                return res.json();
+            } else {
+                throw new Error(`Error: ${res.status}`);
+            }
+        })
+        .then(data => {
+            console.log('Success:', data);
+            // This data variable contains nothing
+            // just redisplay the entire channel messages
+            display_channel_msgs(channel_id);
+        })
+        .catch(err => {
+            console.log('Error:', err);
+        });
+}
+
+// Helper function that loads msg bubble onto page
+const load_msg_bubble_onto_page = (msg_page, msg) => {
+    
+    // Each message bubble contains ...
+    let msg_bubble = document.createElement("div");
+    msg_bubble.id = msg["id"];
+    msg_bubble.className = "msg-bubble";
+    msg_bubble.style.display = "flex";
+    
+    // SIDENOTE - break into 3 parts:
+    //      1. Msg details
+    //      2. Msg itself
+    //      3. Reacts
+
+    let msg_details = document.createElement("div");
+
+    //! Peg on dp first to msg_details
+
+    // Sender's name
+    let sender_name = document.createElement("h5");
+    sender_name.className = "sender-name";
+    get_user_details(msg["sender"]).then((inner_data) => {
+        sender_name.textContent = inner_data["name"];
+    });
+    msg_details.appendChild(sender_name);
+
+    // Sent time
+    let sent_time = document.createElement("h6");
+    sent_time.className = "sent-time";
+    let date_time = new Date(msg["sentAt"]);
+    // If sent on same day or yesterday --> show time
+    // Else just show date
+    if (is_today(date_time)) {
+        sent_time.textContent = "Today at " + ("0" + date_time.getHours()).slice(-2) + ":" + ("0" + date_time.getMinutes()).slice(-2);
+    } else if (is_yesterday(date_time)) {
+        sent_time.textContent = "Yesterday at " + ("0" + date_time.getHours()).slice(-2) + ":" + ("0" + date_time.getMinutes()).slice(-2);
+    } else {
+        sent_time.textContent = ("0" + date_time.getDate()).slice(-2) + "/" + ("0" + (date_time.getMonth() + 1)).slice(-2) + "/" + date_time.getFullYear();
+    }
+    // Edited time --> Just peg it on the end of sent_time
+    if (msg["edited"]) {
+        let line_break = document.createElement("br");
+        msg_details.appendChild(line_break);
+        let edit_time = new Date(date["editedAt"]);
+        sent_time.textContent += ", edited " + ("0" + edit_time.getHours()).slice(-2) + ":" + ("0" + edit_time.getMinutes()).slice(-2) + " " + ("0" + edit_time.getDate()).slice(-2) + "/" + ("0" + (edit_time.getMonth() + 1)).slice(-2) + "/" + edit_time.getFullYear();
+    }
+    msg_details.appendChild(sent_time);
+    msg_bubble.appendChild(msg_details);
+
+    // The message itself
+    let msg_itself = document.createElement("p");
+    msg_itself.id = "msg text of " + msg["id"];
+    msg_itself.textContent = msg["message"];
+    msg_bubble.appendChild(msg_itself);
+
+    //! Implement a popup that appears when you press on message (toggle)
+    //! Popup includes buttons to:
+    //!     1. Edit (if you're the sender)
+    //!     2. Delete (if you're the sender)
+    //!     3. React x 3
+
+    /*
+    // Reactions
+    //! This part's time complexity is scuffed
+    //! so just comment it out when testing other stuff
+    let msg_reactions = document.createElement("div");
+
+    let string_reaction_bubble = document.createElement("div");
+
+    string_reaction_bubble.className = "string-reaction-bubble";
+    //! Insert emoji icon for bubble
+    let string_reaction_popup = document.createElement("span");
+    string_reaction_popup.textContent = "No reacts";
+
+    let boolean_reaction_bubble = document.createElement("div");
+    //! Insert emoji icon for bubble
+    boolean_reaction_bubble.className = "boolean-reaction-bubble";
+    let boolean_reaction_popup = document.createElement("span");
+    boolean_reaction_popup.textContent = "No reacts";
+
+    let number_reaction_bubble = document.createElement("div");
+    //! Insert emoji icon for bubble
+    number_reaction_bubble.className = "number-reaction-bubble";
+    let number_reaction_popup = document.createElement("span");
+    number_reaction_popup.textContent = "No reacts";
+
+    let react_string_counter = 0;
+    let react_boolean_counter = 0;
+    let react_number_counter = 0;
+
+    for (var reaction of msg["react"]) {
+        
+        // get the name of the reactor
+        var reactorUserName;
+        get_user_details(reaction["user"]).then((inner_data) => {
+            reactorUserName = inner_data["name"];
+        });
+
+        if (reaction["react"] === "string") {
+            if (react_string_counter == 0) {
+                string_reaction_popup.textContent = reactorUserName;
+            } else if (react_string_counter == 1) {
+                string_reaction_popup.textContent = reactorUserName + " and " + string_reaction_popup.textContent;
+            } else {
+                string_reaction_popup.textContent = reactorUserName + ", " + string_reaction_popup.textContent;
+            }
+            react_string_counter++;
+        }
+        if (reaction["react"] === "boolean") {
+            if (react_boolean_counter == 0) {
+                boolean_reaction_popup.textContent = reactorUserName;
+            } else if (react_boolean_counter == 1) {
+                boolean_reaction_popup.textContent = reactorUserName + " and " + boolean_reaction_popup.textContent;
+            } else {
+                boolean_reaction_popup.textContent = reactorUserName + ", " + boolean_reaction_popup.textContent;
+            }
+            react_boolean_counter++;
+        }
+        if (reaction["react"] === "number") {
+            if (react_number_counter == 0) {
+                number_reaction_popup.textContent = reactorUserName;
+            } else if (react_number_counter == 1) {
+                number_reaction_popup.textContent = reactorUserName + " and " + number_reaction_popup.textContent;
+            } else {
+                number_reaction_popup.textContent = reactorUserName + ", " + number_reaction_popup.textContent;
+            }
+            react_number_counter++;
+        }
+    }
+
+    let string_reaction_count = document.createElement("h6");
+    string_reaction_count.textContent = String(react_string_counter);
+    string_reaction_bubble.appendChild(string_reaction_count);
+    string_reaction_bubble.appendChild(string_reaction_popup);
+
+    let boolean_reaction_count = document.createElement("h6");
+    boolean_reaction_count.textContent = String(react_boolean_counter);
+    boolean_reaction_bubble.appendChild(boolean_reaction_count);
+    boolean_reaction_bubble.appendChild(boolean_reaction_popup);
+    
+    let number_reaction_count = document.createElement("h6");
+    number_reaction_count.textContent = String(react_number_counter);
+    number_reaction_bubble.appendChild(number_reaction_count);
+    number_reaction_bubble.appendChild(number_reaction_popup);
+
+    msg_reactions.appendChild(string_reaction_bubble);
+    msg_reactions.appendChild(boolean_reaction_bubble);
+    msg_reactions.appendChild(number_reaction_bubble);
+
+    msg_bubble.appendChild(msg_reactions);
+
+    msg_page.appendChild(msg_bubble);
+    */
+
+    msg_page.appendChild(msg_bubble);
 }
