@@ -754,6 +754,8 @@ const display_channel_msgs = (channel_id) => {
     pages_array = [];
     num_pages = 0;
 
+    current_page_index = 0;
+
     // Putting fetch in a while loop is death
     // So I used recursion instead
     msgs_fetch_done = false;
