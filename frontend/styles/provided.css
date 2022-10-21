@@ -18,6 +18,10 @@ button:disabled {
     cursor: auto;
 }
 
+textarea {
+    resize: none;
+}
+
 /*********************************************************************/
 /**                          Milestone 1                            **/
 /*********************************************************************/
@@ -98,7 +102,9 @@ button:disabled {
 #channels-list {
     background-color: #dcb7ff;
     width: 20vw;
+    height: 631.13px;
     border-right: purple solid 2px;
+    overflow: scroll;
 }
 
 .tab {
@@ -185,7 +191,6 @@ button:disabled {
 
 #message-box {
     /* position: absolute; */
-    resize: none;
     width: 100%;
 }
 
@@ -221,6 +226,8 @@ button:disabled {
 
 #page-indicator {
     text-align: center;
+    margin-left: 3px;
+    margin-right: 3px;
 }
 
 .msg-page {
@@ -234,14 +241,19 @@ button:disabled {
     width: 100%;
 }
 
+.msg-bubble:hover {
+    background-color: rgb(239, 227, 245);
+}
+
 .msg-details {
     display: flex;
     flex-direction: row;
     justify-content: flex-start;
-    width: 120%;
+    width: 100%;
     align-items: center;
     margin-top: 0.5em;
     margin-bottom: 0.25em;
+    background-color: transparent;
 }
 
 .sender-dp {
@@ -259,4 +271,25 @@ button:disabled {
 
 .msg-itself {
     margin: 0.3em 1em 1em 1em;
+    background-color: transparent;
+    word-break: break-all;
+}
+
+#edit-hyperlinks {
+    margin-left: 0.5em;
+    display: flex;
+    align-items: center;
+}
+
+.edit-links {
+    font-size: 0.8em;
+}
+
+.utility-button {
+    background-color: white;
+}
+
+.utility-icon {
+    width: 10px;
+    height: 10px;
 }

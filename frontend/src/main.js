@@ -331,7 +331,7 @@ const display_mainpage = () => {
         .then(data => {
             // console.log('Success:', data);
             let channel_tabs_wrapper = document.getElementById('channel-tabs-wrapper');
-            //! Kill all children of wrapper and tabs first
+            // Kill all children of wrapper and tabs first
             while (channel_tabs_wrapper.firstChild) {
                 channel_tabs_wrapper.removeChild(channel_tabs_wrapper.lastChild);
             }
@@ -450,7 +450,7 @@ const hide_mainpage = () => {
 // Opening the channel
 let open_channel = (channel_id) => {
     
-    //! If new channel form is open, close it
+    // If new channel form is open, close it
     let new_channel_bubble = document.getElementById("new-channel-bubble");
     new_channel_bubble.style.display = "none";
 
@@ -495,13 +495,13 @@ let open_channel = (channel_id) => {
         }
     }
 
-    //! Milestone 3 - Display channel msgs
+    // Milestone 3 - Display channel msgs
     display_channel_msgs(channel_id);
 
-    //! Milestone 3 - Update send button for this channel
+    // Milestone 3 - Update send button for this channel
     update_send_button(channel_id);
 
-    //! Milestone 3 - Clear the message box
+    // Milestone 3 - Clear the message box
     document.getElementById("message-box").value = "";
 
     // Bind ENTER key to send button
@@ -742,7 +742,7 @@ let msgs_fetch_done = false;
 const display_channel_msgs = (channel_id) => {
     
     let channel_messages = document.getElementById("channel-messages");
-    //! Kill all children heehaw
+    // Kill all children heehaw
     while (channel_messages.firstChild) {
         channel_messages.removeChild(channel_messages.lastChild);
     }
@@ -843,7 +843,7 @@ const generate_msg_pages_recursion = (channel_id, msg_index) => {
             // console.log(data_msgs_dup);
             for (var msg of data_msgs_dup.reverse()) {
                 // console.log(msg);
-                load_msg_bubble_onto_page(msg_page, msg);
+                load_msg_bubble_onto_page(channel_id, msg_page, msg);
             }
 
             // console.log("I made it here x 2");
@@ -898,7 +898,7 @@ const display_new_page = (new_index) => {
     }
     pages_array[new_index].style.display = "flex";
 
-    //! Make it view from the bottom
+    // Make it view from the bottom
     let channel_messages_screen = document.getElementById("channel-messages");
     channel_messages_screen.scrollTop = channel_messages_screen.scrollHeight;
 
@@ -997,9 +997,9 @@ const update_send_button = (channel_id) => {
 
 
 // Function that delete messages
-//! This function has to be binded to a button in load_msg_bubble_onto_page
 const delete_message = (channel_id, msg_id) => {
-    fetch(url + "/messages/" + channel_id + "/" + msg_id, {
+    console.log('Deleting message ' + msg_id + " from channel " + channel_id);
+    fetch(url + "/message/" + channel_id + "/" + msg_id, {
         method: "DELETE",
         headers: {
             'Authorization': 'Bearer ' + token,
@@ -1021,23 +1021,19 @@ const delete_message = (channel_id, msg_id) => {
         })
         .catch(err => {
             console.log('Error:', err);
-        })
+        });
 }
 
 // Function that updates messages
 //! This function has to be binded to a button in load_msg_bubble_onto_page
-//! 
-const update_message = (channel_id, msg_id) => {
+const update_message = (channel_id, msg_id, new_msg, new_img) => {
     
-
-
-    //! Need to be able to read in edited msg/image
     let data = {
-        'message': new_message,
-        'image': new_image
+        'message': new_msg,
+        'image': new_img
     }
-
-    fetch(url + "/messages/" + channel_id + "/" + msg_id, {
+    
+    fetch(url + "/message/" + channel_id + "/" + msg_id, {
         method: "PUT",
         headers: {
             'Authorization': 'Bearer ' + token,
@@ -1065,8 +1061,139 @@ const update_message = (channel_id, msg_id) => {
         });
 }
 
+// Function that toggles whether messages are pinned or not
+//! This function has yet to be tested
+const toggle_pin = (channel_id, msg_id, pin_status) => {
+    if (pin_status) {
+        fetch(url + "/message/unpin/" + channel_id + "/" + msg_id, {
+            method: "POST",
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(res => {
+                if (res.ok) {
+                    return res.json();
+                } else {
+                    throw new Error(`Error: ${res.status}`);
+                }
+            })
+            .then (data => {
+                console.log('Success:', data);
+                // This data variable contains nothing
+                // // just redisplay the entire channel messages
+                // display_channel_msgs(channel_id);
+                let pin_button = document.getElementById("pin-button-for-" + String(msg_id));
+                pin_button.onclick = (() => toggle_pin(channel_id, msg_id, false));
+            })
+            .catch(err => {
+                console.log('Error:', err);
+            });
+    } else {
+        fetch(url + "/message/pin/" + channel_id + "/" + msg_id, {
+            method: "POST",
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(res => {
+                if (res.ok) {
+                    return res.json();
+                } else {
+                    throw new Error(`Error: ${res.status}`);
+                }
+            })
+            .then (data => {
+                console.log('Success:', data);
+                // This data variable contains nothing
+                // // just redisplay the entire channel messages
+                // display_channel_msgs(channel_id);
+                let pin_button = document.getElementById("pin-button-for-" + String(msg_id));
+                pin_button.onclick = (() => toggle_pin(channel_id, msg_id, true));
+
+            })
+            .catch(err => {
+                console.log('Error:', err);
+            });
+    }
+}
+
+// Function that alters the message bubble so that
+// you can type in the edited message
+const display_edit_msg_menu = (channel_id, msg_id) => {
+    // Change the p tag in msg_itself to a textarea
+    let msg_itself = document.getElementById("msg text of " + String(msg_id));
+    let edit_textbox = document.createElement("textarea");
+    edit_textbox.className = "edit-textbox";
+    let original_message = msg_itself.textContent;
+    edit_textbox.value = msg_itself.textContent;
+    msg_itself.parentNode.replaceChild(edit_textbox, msg_itself);
+    edit_textbox.addEventListener('keydown', (event) => {
+        if (event.keyCode === 13 || event.keyCode === 27) {
+            let new_msg_itself = document.createElement('p');
+            new_msg_itself.className = "msg-itself";
+            new_msg_itself.id = "msg text of " + String(msg_id);
+            new_msg_itself.textContent = event.keyCode === 13 ? edit_textbox.value : original_message;
+            if (event.keyCode === 13) {
+                update_message(channel_id, msg_id, new_msg_itself.textContent, "");
+            } 
+            edit_textbox.parentNode.replaceChild(new_msg_itself, edit_textbox);
+            new_msg_itself.parentNode.removeChild(document.getElementById("edit-hyperlinks"));
+        }
+    });
+
+    let edit_hyperlinks = document.createElement('div');
+    edit_hyperlinks.id = "edit-hyperlinks";
+    let save_link = document.createElement('a');
+    save_link.className = "edit-links";
+    save_link.id = "save-link-for-" + String(msg_id);
+    save_link.href = "##";
+    save_link.textContent = "save";
+    let cancel_link = document.createElement('a');
+    cancel_link.className = "edit-links";
+    cancel_link.id = "cancel-link-for-" + String(msg_id);
+    cancel_link.href = "###";
+    cancel_link.textContent = "cancel";
+    save_link.addEventListener('click', () => {
+        let new_msg_itself = document.createElement('p');
+        new_msg_itself.className = "msg-itself";
+        new_msg_itself.id = "msg text of " + String(msg_id);
+        new_msg_itself.textContent = edit_textbox.value;
+        update_message(channel_id, msg_id, new_msg_itself.textContent, "");
+        edit_textbox.parentNode.replaceChild(new_msg_itself, edit_textbox);
+        new_msg_itself.parentNode.removeChild(document.getElementById("edit-hyperlinks"));
+    });
+    cancel_link.addEventListener('click', () => {
+        let new_msg_itself = document.createElement('p');
+        new_msg_itself.className = "msg-itself";
+        new_msg_itself.id = "msg text of " + String(msg_id);
+        new_msg_itself.textContent = original_message;
+        edit_textbox.parentNode.replaceChild(new_msg_itself, edit_textbox);
+        new_msg_itself.parentNode.removeChild(document.getElementById("edit-hyperlinks"));
+    });
+    let msg_bubble = document.getElementById(String(msg_id));
+    let enter_to_ = document.createElement('pre');
+    enter_to_.className = "edit-links";
+    enter_to_.textContent = "enter to ";
+    edit_hyperlinks.appendChild(enter_to_);
+    edit_hyperlinks.appendChild(save_link);     //! Change this to insertBefore later
+    let space = document.createElement('pre');
+    space.className = "edit-links";
+    space.textContent = " • ";
+    edit_hyperlinks.appendChild(space);
+    let escape_to_ = document.createElement('pre');
+    escape_to_.className = "edit-links";
+    escape_to_.textContent = "escape to ";
+    edit_hyperlinks.appendChild(escape_to_);
+    edit_hyperlinks.appendChild(cancel_link);   //! Change this to insertBefore later
+    msg_bubble.appendChild(edit_hyperlinks);
+
+}
+
 // Helper function that loads msg bubble onto page
-const load_msg_bubble_onto_page = (msg_page, msg) => {
+const load_msg_bubble_onto_page = (channel_id, msg_page, msg) => {
     
 
     // Each message bubble contains ...
@@ -1083,7 +1210,7 @@ const load_msg_bubble_onto_page = (msg_page, msg) => {
     let msg_details = document.createElement("div");
     msg_details.className = "msg-details";
 
-    //! Peg on dp first to msg_details
+    // Peg on dp first to msg_details
     let sender_dp = document.createElement("img");
     sender_dp.className = "sender-dp";
     sender_dp.style.height = "40px";
@@ -1117,7 +1244,7 @@ const load_msg_bubble_onto_page = (msg_page, msg) => {
     if (msg["edited"]) {
         let line_break = document.createElement("br");
         msg_details.appendChild(line_break);
-        let edit_time = new Date(date["editedAt"]);
+        let edit_time = new Date(msg["editedAt"]);
         sent_time.textContent += ", edited " + ("0" + edit_time.getHours()).slice(-2) + ":" + ("0" + edit_time.getMinutes()).slice(-2) + " " + ("0" + edit_time.getDate()).slice(-2) + "/" + ("0" + (edit_time.getMonth() + 1)).slice(-2) + "/" + edit_time.getFullYear();
     }
     msg_details.appendChild(sent_time);
@@ -1126,15 +1253,57 @@ const load_msg_bubble_onto_page = (msg_page, msg) => {
     // The message itself
     let msg_itself = document.createElement("p");
     msg_itself.className = "msg-itself";
-    msg_itself.id = "msg text of " + msg["id"];
+    msg_itself.id = "msg text of " + msg_bubble.id;
     msg_itself.textContent = msg["message"];
     msg_bubble.appendChild(msg_itself);
 
+    //! Secret Edit menu
+
     //! Implement a popup that appears when you press on message (toggle)
     //! Popup includes buttons to:
-    //!     1. Edit (if you're the sender)
-    //!     2. Delete (if you're the sender)
-    //!     3. React x 3
+    //!     1. Pin --> Still need to view pinned msgs
+    //      2. Edit (if you're the sender)
+    //      3. Delete (if you're the sender)
+    //!     4. React x 3 --> This will be in a separate popup
+
+    let msg_utility_popup = document.createElement("span");
+    msg_utility_popup.className = "msg-utility-popup";
+    msg_utility_popup.id = "msg-utility-popup-for-" + msg_bubble.id;
+
+    // Pin
+    let pin_button = document.createElement("button");
+    pin_button.className = "utility-button";
+    pin_button.id = "pin-button-for-" + msg_bubble.id;
+    let pin_icon = document.createElement("img");
+    pin_icon.className = "utility-icon";
+    pin_icon.src = "./src/images/pin-icon.svg";
+    pin_button.appendChild(pin_icon);
+    pin_button.onclick = (() => toggle_pin(channel_id, msg_bubble.id, msg["pinned"]));
+    msg_utility_popup.appendChild(pin_button);
+
+    // Edit
+    let edit_button = document.createElement("button");
+    edit_button.className = "utility-button";
+    edit_button.id = "edit-button-for-" + msg_bubble.id;
+    let edit_icon = document.createElement("img");
+    edit_icon.className = "utility-icon";
+    edit_icon.src = "./src/images/pencil-icon.svg";
+    edit_button.appendChild(edit_icon);
+    edit_button.onclick = (() => display_edit_msg_menu(channel_id, msg_bubble.id));
+    msg_utility_popup.appendChild(edit_button);
+
+    // Delete
+    let delete_button = document.createElement("button");
+    delete_button.className = "utility-button";
+    delete_button.id = "delete-button-for-" + msg_bubble.id;
+    let delete_icon = document.createElement("img");
+    delete_icon.className = "utility-icon";
+    delete_icon.src = "./src/images/delete-icon.svg";
+    delete_button.appendChild(delete_icon);
+    delete_button.onclick = (() => delete_message(channel_id, msg_bubble.id));
+    msg_utility_popup.appendChild(delete_button);
+
+    msg_bubble.appendChild(msg_utility_popup);
 
     /*
     // Reactions
