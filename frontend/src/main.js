@@ -83,6 +83,13 @@ const submit_login = (event) => {
 }
 login_button.onclick = submit_login;
 
+// // Bind ENTER key to login
+// login_form.addEventListener('keydown', (event) => {
+//     if (event.keyCode === 13) {
+//         submit_login();
+//     }
+// });
+
 //* Functions to submit signup form
 // Signup email
 let signup_email = signup_form.email_su;
@@ -129,7 +136,7 @@ const submit_signup = (event) => {
         password: signup_password
     };
 
-    console.log("it has made it up to fetch stage");
+    // console.log("it has made it up to fetch stage");
 
     fetch(url + "/auth/register", {
         method: "POST",
@@ -140,10 +147,10 @@ const submit_signup = (event) => {
     })
         .then(res => {
             if (res.ok) {
-                console.log("res is ok I guess");
+                // console.log("res is ok I guess");
                 return res.json();
             } else {
-                console.log("res is not ok i guess")
+                // console.log("res is not ok i guess")
                 throw new Error(`Error: ${res.status}`);
             }
         })
@@ -212,7 +219,18 @@ const display_signup = () => {
     login_bubble.style.display = "none";
     const signup_bubble = document.getElementById("signup-bubble");
     signup_bubble.style.display = "block";
-    login_form.reset();
+    // // Unbind ENTER key for login
+    // let old_login_form = document.getElementById("login_form");
+    // let new_login_form = old_login_form.cloneNode(true);
+    // old_login_form.parentNode.replaceChild(new_login_form, old_login_form);
+    // login_form = document.forms.login_form;
+    // // Bind ENTER key for signup
+    // signup_form.addEventListener('keydown', (event) => {
+    //     if (event.keyCode === 13) {
+    //         signout_function();
+    //     }
+    // });
+    new_login_form.reset();
 }
 const signup_hyperlink = document.getElementById("signup-hyperlink");
 signup_hyperlink.addEventListener("click", display_signup);
@@ -223,6 +241,17 @@ const display_login = () => {
     signup_bubble.style.display = "none";
     const login_bubble = document.getElementById("login-bubble");
     login_bubble.style.display = "block";
+    // // Unbind ENTER key for signup
+    // let old_signup_form = document.getElementById("signup_form");
+    // let new_signup_form = new_signup_form.cloneNode(true);
+    // old_signup_form.parentNode.replaceChild(new_signup_form, old_signup_form);
+    // signup_form = documents.forms.signup_form;
+    // // Bind ENTER key for login
+    // login_form.addEventListener('keydown', (event) => {
+    //     if (event.keyCode === 13) {
+    //         submit_login();
+    //     }
+    // });    
     signup_form.reset();
 }
 const login_hyperlink = document.getElementById("login-hyperlink");
@@ -323,6 +352,7 @@ const display_mainpage = () => {
                     
                     // Create heading
                     let channel_name = document.createElement("h4");
+                    channel_name.className = "channel-name";
                     channel_name.textContent = channel["name"];
                     channel_heading.appendChild(channel_name);
                     // Show channel details (that's not desc)
@@ -331,6 +361,7 @@ const display_mainpage = () => {
                     channel_details.textContent = channel["private"] ? "Private" : "Public";
                     channel_details.textContent = channel_details.textContent + " channel - Created ";
                     let channel_desc = document.createElement("p");
+                    channel_desc.className = "channel-desc";
                     // Creator?
                     get_user_details(channel["creator"]).then((data_layer_3) => { 
                         channel_details.textContent = channel_details.textContent + " by " + data_layer_3["name"]; 
@@ -383,7 +414,7 @@ const display_mainpage = () => {
                     let tab_label = document.createElement("h6");
                     tab_label.className = "tab-label";
                     tab_label.id = "tab-label-for-" + channel["id"];
-                    console.log("tab_label's id: ", tab_label.id);
+                    // console.log("tab_label's id: ", tab_label.id);
                     tab_label.textContent = channel["name"];
                     tab.appendChild(tab_label);
                     // console.log("channelId being parsed into listener: ", channel["id"]);
@@ -410,6 +441,10 @@ const hide_mainpage = () => {
     while(channel_tabs_wrapper.firstChild != null) {
         channel_tabs_wrapper.removeChild(channel_tabs_wrapper.lastChild);
     }
+    // Remove ENTER key send bind
+    let old_message_box = document.getElementById("message-box");
+    let new_message_box = old_message_box.cloneNode(true);
+    old_message_box.parentNode.replaceChild(new_message_box, old_message_box);
 }
 
 // Opening the channel
@@ -469,6 +504,18 @@ let open_channel = (channel_id) => {
     //! Milestone 3 - Clear the message box
     document.getElementById("message-box").value = "";
 
+    // Bind ENTER key to send button
+    // Remove old binds
+    let old_message_box = document.getElementById("message-box");
+    let new_message_box = old_message_box.cloneNode(true);
+    old_message_box.parentNode.replaceChild(new_message_box, old_message_box);
+    // Chuck in new bind
+    new_message_box.addEventListener('keydown', (event) => {
+        if (event.keyCode === 13) {
+            send_message(channel_id);
+        }
+    });
+
     const channel_screen = document.getElementById("channel-screen");
     channel_screen.style.display = "flex";
 }
@@ -478,7 +525,7 @@ const new_channel_tab = document.getElementById("create-channel-tab");
 const display_new_channel_form = () => {
     // Unpress the tabs
     let channel_tabs_wrapper = document.getElementById('channel-tabs-wrapper');
-    console.log("Tabs LOOP!!");
+    // console.log("Tabs LOOP!!");
     for (var channel_tab of channel_tabs_wrapper.children) {
         // Get pure id of channel_tab
         let pure_id = channel_tab.id.replace("tab-for-", "");
@@ -533,6 +580,9 @@ const create_channel = () => {
 
     let new_channel_priv_status_in_data = new_channel_priv_status.checked;
     
+    //! Stop them from creating a channel with no name
+    //! Or a name that has already been taken ooooh
+
     let new_channel_desc_in_data = new_channel_desc;
     if (typeof new_channel_desc != "string" || new_channel_desc == "") { 
         new_channel_desc_in_data = "no description.";
@@ -689,7 +739,6 @@ let num_pages = 0;
 let msgs_fetch_done = false;
 
 // Function that displays channel messages
-//! This function is too phat --> break it up into smaller functions
 const display_channel_msgs = (channel_id) => {
     
     let channel_messages = document.getElementById("channel-messages");
@@ -709,24 +758,33 @@ const display_channel_msgs = (channel_id) => {
     // So I used recursion instead
     msgs_fetch_done = false;
     generate_msg_pages_recursion(channel_id, 0);
-    console.log("number of pages: " + num_pages);
+
+    // // Making it view from the bottom
+    // let channel_messages_screen = document.getElementById("channel-messages");
+    // channel_messages_screen.scrollTop = channel_messages_screen.scrollHeight;
+
+    // console.log("number of pages: " + num_pages);
+
 }
 
 // Function that updates the paginator
 const update_paginator = () => {
-    // Link to pagination navigator
-    current_page_index = 0;
-
-    // console.log("Doesn't this exist?", document.getElementById("page-indicator"));
+    // console.log("Current page index: " + current_page_index);
 
     // Update page indicator in navi
-    let first_page_num = num_pages ? String(current_page_index + 1) : String(0);
-    document.getElementById("page-indicator").textContent = "Page " + first_page_num + " of " + String(num_pages);
+    let page_indicator = document.getElementById("page-indicator");
+    page_indicator.textContent = num_pages ? "Page " + String(current_page_index + 1) + " of " + String(num_pages): "Page " + String(0) + " of " + String(num_pages);
+    
     // Toggle buttons
-    document.getElementById("more-recent-button").setAttribute("disabled", "");
-    document.getElementById("more-recent-button").removeAttribute("enabled");
+    if (current_page_index == 0) {
+        document.getElementById("more-recent-button").setAttribute("disabled", "");
+        document.getElementById("more-recent-button").removeAttribute("enabled");
+    } else {
+        document.getElementById("more-recent-button").setAttribute("enabled", "");
+        document.getElementById("more-recent-button").removeAttribute("disabled");
+    }
 
-    if (num_pages <= 1) { 
+    if (num_pages <= 1 || current_page_index == num_pages - 1) { 
         document.getElementById("earlier-button").setAttribute("disabled", "");
         document.getElementById("earlier-button").removeAttribute("enabled");
     } else {
@@ -816,7 +874,9 @@ const generate_msg_pages_recursion = (channel_id, msg_index) => {
                 update_paginator();
             }
             
-            // Otherwise, done
+            // Making it view from the bottom
+            let channel_messages_screen = document.getElementById("channel-messages");
+            channel_messages_screen.scrollTop = channel_messages_screen.scrollHeight;
         })
         .catch(err => {
             console.log('Error:', err);
@@ -826,6 +886,8 @@ const generate_msg_pages_recursion = (channel_id, msg_index) => {
 // Function to display a different page
 const display_new_page = (new_index) => {
     
+    current_page_index = new_index;
+
     if (new_index < num_pages - 1) {
         pages_array[new_index + 1].style.display = "none";
     }
@@ -835,26 +897,31 @@ const display_new_page = (new_index) => {
     pages_array[new_index].style.display = "flex";
 
     //! Make it view from the bottom
+    let channel_messages_screen = document.getElementById("channel-messages");
+    channel_messages_screen.scrollTop = channel_messages_screen.scrollHeight;
 
     // Update page indicator in navi
-    document.getElementById("page-indicator").textContent = "Page " + String(num_pages - new_index) + " of " + String(num_pages);
+    update_paginator();
 
-    // Disable/Enable buttons
-    if (new_index == 0) { 
-        document.getElementById("earlier-button").setAttribute("disabled", "");
-        document.getElementById("earlier-button").removeAttribute("enabled");
-    } else {
-        document.getElementById("earlier-button").setAttribute("enabled", "");
-        document.getElementById("earlier-button").removeAttribute("disabled");
-    }
 
-    if (new_index >= num_pages - 1) {
-        document.getElementById("more-recent-button").setAttribute("disabled", "");
-        document.getElementById("more-recent-button").removeAttribute("enabled");
-    } else {
-        document.getElementById("more-recent-button").setAttribute("enabled", "");
-        document.getElementById("more-recent-button").removeAttribute("disabled");
-    }
+    // console.log("Current page index: " + current_page_index);
+
+    // // Disable/Enable buttons
+    // if (current_page_index == 0) { 
+    //     document.getElementById("earlier-button").setAttribute("disabled", "");
+    //     document.getElementById("earlier-button").removeAttribute("enabled");
+    // } else {
+    //     document.getElementById("earlier-button").setAttribute("enabled", "");
+    //     document.getElementById("earlier-button").removeAttribute("disabled");
+    // }
+
+    // if (current_page_index == num_pages - 1) {
+    //     document.getElementById("more-recent-button").setAttribute("enabled", "");
+    //     document.getElementById("more-recent-button").removeAttribute("disabled");
+    // } else {
+    //     document.getElementById("more-recent-button").setAttribute("disabled", "");
+    //     document.getElementById("more-recent-button").removeAttribute("enabled");
+    // }
 }
 document.getElementById("earlier-button").onclick = () => display_new_page(current_page_index + 1);
 document.getElementById("more-recent-button").onclick = () => display_new_page(current_page_index - 1);
@@ -1015,6 +1082,9 @@ const load_msg_bubble_onto_page = (msg_page, msg) => {
     msg_details.className = "msg-details";
 
     //! Peg on dp first to msg_details
+    let sender_dp = document.createElement("img");
+    sender_dp.className = "sender-dp";
+    sender_dp.style.height = "40px";
 
     // Sender's name
     let sender_name = document.createElement("h5");
@@ -1022,8 +1092,10 @@ const load_msg_bubble_onto_page = (msg_page, msg) => {
     // console.log(msg);
     // console.log(msg["sender"]);
     get_user_details(msg["sender"]).then((inner_data) => {
+        sender_dp.src = inner_data["image"] ? inner_data["image"] : "./src/images/no_dp.svg";
         sender_name.textContent = inner_data["name"];
     });
+    msg_details.appendChild(sender_dp);
     msg_details.appendChild(sender_name);
 
     // Sent time

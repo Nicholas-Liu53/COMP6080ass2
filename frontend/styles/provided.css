@@ -10,6 +10,14 @@ html, body {
     flex-direction: column;
 }
 
+button, #new-channel-priv-status, .tab {
+    cursor: pointer
+}
+
+button:disabled {
+    cursor: auto;
+}
+
 /*********************************************************************/
 /**                          Milestone 1                            **/
 /*********************************************************************/
@@ -152,6 +160,16 @@ html, body {
     padding-left: 3px;
 }
 
+.channel-name {
+    margin-top: 0.67em;
+    margin-bottom: 0.67em;
+}
+
+.channel-desc {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+
 #channel-messages {
     outline: 1px solid gray;
 }
@@ -190,6 +208,9 @@ html, body {
 
 #channel-messages {
     height: 45vh;
+    overflow: scroll;
+    overflow-x: hidden;
+    overflow-y: visible;
 }
 
 #pagination-navi {
@@ -202,11 +223,15 @@ html, body {
     text-align: center;
 }
 
+.msg-page {
+    flex-direction: column;
+}
+
 .msg-bubble {
     display: flex;
     flex-direction: column;
     outline: 1px solid gray;
-    width: 100vw;
+    width: 100%;
 }
 
 .msg-details {
@@ -219,6 +244,11 @@ html, body {
     margin-bottom: 0.25em;
 }
 
+.sender-dp {
+    margin: 0 0 0 0.4em;
+    /* height: 40px; */
+}
+
 .sender-name {
     margin: 0 10px 0 10px;
 }
@@ -228,5 +258,5 @@ html, body {
 }
 
 .msg-itself {
-    margin-left: 7px;
+    margin: 0.3em 1em 1em 1em;
 }
