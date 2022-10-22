@@ -278,6 +278,27 @@ close_button.onclick = close_error_popup;
 //**                         Milestone 2                            **/
 //********************************************************************/
 
+// These functions are related to Milestone 3 but milestone 2 uses them
+let view_pinned_only = false;
+// Function that updates the view_pinned_only_button
+const update_view_pinned_only_button = () => {
+    let view_pinned_only_button = document.getElementById("view-pinned-only-button");
+    if (view_pinned_only) { 
+        view_pinned_only_button.className = "view-pinned-only-on";
+        view_pinned_only_button.textContent = view_pinned_only_button.textContent.replace("OFF", "ON");
+    } else {
+        view_pinned_only_button.className = "view-pinned-only-off";
+        view_pinned_only_button.textContent= view_pinned_only_button.textContent.replace("ON", "OFF");
+    }
+}
+
+// Function that changes the view_pinned_only_variable
+let toggle_view_pinned_only = (channel_id) => {
+    view_pinned_only = !view_pinned_only;
+    update_view_pinned_only_button();
+    display_channel_msgs(channel_id, view_pinned_only);
+}
+
 // Display the mainpage (when you log in)
 const display_mainpage = () => {
     const login_button = document.getElementById("login-bubble");
@@ -495,8 +516,14 @@ let open_channel = (channel_id) => {
         }
     }
 
+    // Milestone 3 - Viewing pinned msgs only
+    view_pinned_only = false;
+    update_view_pinned_only_button();
+    let view_pinned_only_button = document.getElementById("view-pinned-only-button");
+    view_pinned_only_button.onclick = (() => toggle_view_pinned_only(channel_id));
+
     // Milestone 3 - Display channel msgs
-    display_channel_msgs(channel_id);
+    display_channel_msgs(channel_id, view_pinned_only);
 
     // Milestone 3 - Update send button for this channel
     update_send_button(channel_id);
@@ -736,10 +763,10 @@ const get_channels = () => {
 let current_page_index = 0;
 let pages_array = [];
 let num_pages = 0;
-let msgs_fetch_done = false;
+let msg_bubbles_list = [];
 
 // Function that displays channel messages
-const display_channel_msgs = (channel_id) => {
+const display_channel_msgs = (channel_id, view_pinned_only) => {
     
     let channel_messages = document.getElementById("channel-messages");
     // Kill all children heehaw
@@ -758,8 +785,14 @@ const display_channel_msgs = (channel_id) => {
 
     // Putting fetch in a while loop is death
     // So I used recursion instead
-    msgs_fetch_done = false;
-    generate_msg_pages_recursion(channel_id, 0);
+    
+    if (view_pinned_only) {
+        msg_bubbles_list = [];
+        display_pinned_msgs_only_recursion(channel_id, 0);
+    } else {
+        generate_msg_pages_recursion(channel_id, 0);
+    }
+
 
     // // Making it view from the bottom
     // let channel_messages_screen = document.getElementById("channel-messages");
@@ -785,7 +818,7 @@ const update_paginator = () => {
         document.getElementById("more-recent-button").setAttribute("enabled", "");
         document.getElementById("more-recent-button").removeAttribute("disabled");
     }
-
+    
     if (num_pages <= 1 || current_page_index == num_pages - 1) { 
         document.getElementById("earlier-button").setAttribute("disabled", "");
         document.getElementById("earlier-button").removeAttribute("enabled");
@@ -793,13 +826,87 @@ const update_paginator = () => {
         document.getElementById("earlier-button").setAttribute("enabled", "");
         document.getElementById("earlier-button").removeAttribute("disabled");
     }
+    
+    // Special case if view_pinned_only is true
+    if (view_pinned_only) {
+        page_indicator.textContent = "Page 1 of 1";
+        document.getElementById("earlier-button").setAttribute("disabled", "");
+        document.getElementById("earlier-button").removeAttribute("enabled");
+        document.getElementById("more-recent-button").setAttribute("disabled", "");
+        document.getElementById("more-recent-button").removeAttribute("enabled");
+    }
+}
+
+// Function that recursively generates a pinned messages on a SINGLE page
+const display_pinned_msgs_only_recursion = (channel_id, msg_index) => {
+    fetch(url + "/message/" + channel_id + "?" + new URLSearchParams({ 
+        start: msg_index 
+    }), {
+        method: "GET",
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+        }
+    })
+        .then(res => {
+            if (res.ok) {
+                return res.json();
+            } else {
+                throw new Error(`Error: ${res.status}`);
+            }
+        })
+        .then(data => {
+            // Keep track how many messages the fetch caught
+            let num_msgs_on_page = data["messages"].length;
+
+            for (var msg of data['messages']) {
+                if (msg['pinned']) {
+                    msg_bubbles_list.push(create_message_bubble(channel_id, msg));
+                }
+            }
+            
+            // If there's more messages in future pages
+            if (num_msgs_on_page == 25) {
+                // Keep going
+                display_pinned_msgs_only_recursion(channel_id, msg_index + 25);
+            
+            // Otherwise lets wrap it up
+            } else {
+                // Reverse the msg_bubbles_list
+                msg_bubbles_list = msg_bubbles_list.reverse();
+
+                // Create a page
+                let msg_page = document.createElement('div');
+                msg_page.className = "msg-page";
+
+                // Now load it on a single page
+                for (var msg_bubble of msg_bubbles_list) {
+                    load_msg_bubble_onto_page(msg_bubble, msg_page);
+                }
+
+                msg_page.style.display = "flex";
+
+                // Push the page reference into the pages_array
+                pages_array.push(msg_page);
+
+                // msg_page becomes a child of channel_messages
+                let channel_messages = document.getElementById('channel-messages');
+                channel_messages.appendChild(msg_page);
+
+                update_paginator();
+
+                // Making it view from the bottom
+                let channel_messages_screen = document.getElementById("channel-messages");
+                channel_messages_screen.scrollTop = channel_messages_screen.scrollHeight;
+            }
+        })
+        .catch(err => {
+            console.log('Error:', err);
+        });
 }
 
 // Function that recursively generates a page of messages
-// The function also conveniently returns the number of pages it created
 const generate_msg_pages_recursion = (channel_id, msg_index) => {
-    
-    let num_msgs_on_page = 0;
 
     let channel_messages = document.getElementById('channel-messages');
 
@@ -825,7 +932,7 @@ const generate_msg_pages_recursion = (channel_id, msg_index) => {
             // console.log('Success:', data);
             
             // Keep track how many messages on page
-            num_msgs_on_page = data["messages"].length;
+            let num_msgs_on_page = data["messages"].length;
             
             // console.log('num_msgs_on_page:', num_msgs_on_page);
             
@@ -843,7 +950,7 @@ const generate_msg_pages_recursion = (channel_id, msg_index) => {
             // console.log(data_msgs_dup);
             for (var msg of data_msgs_dup.reverse()) {
                 // console.log(msg);
-                load_msg_bubble_onto_page(channel_id, msg_page, msg);
+                load_msg_bubble_onto_page(create_message_bubble(channel_id, msg), msg_page);
             }
 
             // console.log("I made it here x 2");
@@ -872,7 +979,6 @@ const generate_msg_pages_recursion = (channel_id, msg_index) => {
             if (num_msgs_on_page == 25) {
                 generate_msg_pages_recursion(channel_id, msg_index + 25);
             } else {
-                msgs_fetch_done = true;
                 update_paginator();
             }
             
@@ -982,7 +1088,7 @@ const send_message = (channel_id) => {
             console.log('Success:', data);
             // This data variable literally contains nothing so
             // just redisplay the entire channel messages
-            display_channel_msgs(channel_id);
+            display_channel_msgs(channel_id, view_pinned_only);
         })
         .catch(err => {
             console.log("Error:", err);
@@ -1017,7 +1123,7 @@ const delete_message = (channel_id, msg_id) => {
             console.log('Success:', data);
             // This data variable contains nothing
             // just redisplay the entire channel messages
-            display_channel_msgs(channel_id);
+            display_channel_msgs(channel_id, view_pinned_only);
         })
         .catch(err => {
             console.log('Error:', err);
@@ -1025,7 +1131,6 @@ const delete_message = (channel_id, msg_id) => {
 }
 
 // Function that updates messages
-//! This function has to be binded to a button in load_msg_bubble_onto_page
 const update_message = (channel_id, msg_id, new_msg, new_img) => {
     
     let data = {
@@ -1054,7 +1159,7 @@ const update_message = (channel_id, msg_id, new_msg, new_img) => {
             console.log('Success:', data);
             // This data variable contains nothing
             // just redisplay the entire channel messages
-            display_channel_msgs(channel_id);
+            display_channel_msgs(channel_id, view_pinned_only);
         })
         .catch(err => {
             console.log('Error:', err);
@@ -1062,7 +1167,6 @@ const update_message = (channel_id, msg_id, new_msg, new_img) => {
 }
 
 // Function that toggles whether messages are pinned or not
-//! This function has yet to be tested
 const toggle_pin = (channel_id, msg_id, pin_status) => {
     if (pin_status) {
         fetch(url + "/message/unpin/" + channel_id + "/" + msg_id, {
@@ -1083,7 +1187,7 @@ const toggle_pin = (channel_id, msg_id, pin_status) => {
                 console.log('Success:', data);
                 // This data variable contains nothing
                 // // just redisplay the entire channel messages
-                // display_channel_msgs(channel_id);
+                display_channel_msgs(channel_id, view_pinned_only);
                 let pin_button = document.getElementById("pin-button-for-" + String(msg_id));
                 pin_button.onclick = (() => toggle_pin(channel_id, msg_id, false));
             })
@@ -1109,7 +1213,7 @@ const toggle_pin = (channel_id, msg_id, pin_status) => {
                 console.log('Success:', data);
                 // This data variable contains nothing
                 // // just redisplay the entire channel messages
-                // display_channel_msgs(channel_id);
+                display_channel_msgs(channel_id, view_pinned_only);
                 let pin_button = document.getElementById("pin-button-for-" + String(msg_id));
                 pin_button.onclick = (() => toggle_pin(channel_id, msg_id, true));
 
@@ -1192,10 +1296,8 @@ const display_edit_msg_menu = (channel_id, msg_id) => {
 
 }
 
-// Helper function that loads msg bubble onto page
-const load_msg_bubble_onto_page = (channel_id, msg_page, msg) => {
-    
-
+// Helper function that creates msg bubble
+const create_message_bubble = (channel_id, msg) => {
     // Each message bubble contains ...
     let msg_bubble = document.createElement("div");
     msg_bubble.id = msg["id"];
@@ -1242,11 +1344,14 @@ const load_msg_bubble_onto_page = (channel_id, msg_page, msg) => {
     }
     // Edited time --> Just peg it on the end of sent_time
     if (msg["edited"]) {
-        let line_break = document.createElement("br");
-        msg_details.appendChild(line_break);
         let edit_time = new Date(msg["editedAt"]);
         sent_time.textContent += ", edited " + ("0" + edit_time.getHours()).slice(-2) + ":" + ("0" + edit_time.getMinutes()).slice(-2) + " " + ("0" + edit_time.getDate()).slice(-2) + "/" + ("0" + (edit_time.getMonth() + 1)).slice(-2) + "/" + edit_time.getFullYear();
     }
+    // Pinned status --> peg it on the end of the sent_time
+    if (msg["pinned"]) {
+        sent_time.textContent += ", pinned";
+    }
+
     msg_details.appendChild(sent_time);
     msg_bubble.appendChild(msg_details);
 
@@ -1261,7 +1366,7 @@ const load_msg_bubble_onto_page = (channel_id, msg_page, msg) => {
 
     //! Implement a popup that appears when you press on message (toggle)
     //! Popup includes buttons to:
-    //!     1. Pin --> Still need to view pinned msgs
+    //      1. Pin --> Still need to view pinned msgs
     //      2. Edit (if you're the sender)
     //      3. Delete (if you're the sender)
     //!     4. React x 3 --> This will be in a separate popup
@@ -1304,6 +1409,15 @@ const load_msg_bubble_onto_page = (channel_id, msg_page, msg) => {
     msg_utility_popup.appendChild(delete_button);
 
     msg_bubble.appendChild(msg_utility_popup);
+    // Animation things for popup to appear
+    msg_bubble.addEventListener('mouseenter', () => {
+        let popup = document.getElementById("msg-utility-popup-for-" + msg_bubble.id);
+        popup.className = "msg-utility-popup-show";
+    });
+    msg_bubble.addEventListener('mouseleave', () => {
+        let popup = document.getElementById("msg-utility-popup-for-" + msg_bubble.id);
+        popup.className = "msg-utility-popup";
+    });
 
     /*
     // Reactions
@@ -1397,6 +1511,11 @@ const load_msg_bubble_onto_page = (channel_id, msg_page, msg) => {
 
     msg_page.appendChild(msg_bubble);
     */
+   return msg_bubble;
+}
+
+// Helper function that loads msg bubble onto page
+const load_msg_bubble_onto_page = (msg_bubble, msg_page) => {
 
     msg_page.appendChild(msg_bubble);
 }
