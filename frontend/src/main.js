@@ -1186,7 +1186,7 @@ const toggle_pin = (channel_id, msg_id, pin_status) => {
             .then (data => {
                 console.log('Success:', data);
                 // This data variable contains nothing
-                // // just redisplay the entire channel messages
+                // just redisplay the entire channel messages
                 display_channel_msgs(channel_id, view_pinned_only);
                 let pin_button = document.getElementById("pin-button-for-" + String(msg_id));
                 pin_button.onclick = (() => toggle_pin(channel_id, msg_id, false));
@@ -1212,7 +1212,7 @@ const toggle_pin = (channel_id, msg_id, pin_status) => {
             .then (data => {
                 console.log('Success:', data);
                 // This data variable contains nothing
-                // // just redisplay the entire channel messages
+                // just redisplay the entire channel messages
                 display_channel_msgs(channel_id, view_pinned_only);
                 let pin_button = document.getElementById("pin-button-for-" + String(msg_id));
                 pin_button.onclick = (() => toggle_pin(channel_id, msg_id, true));
