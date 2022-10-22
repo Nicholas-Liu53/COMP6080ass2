@@ -1296,6 +1296,70 @@ const display_edit_msg_menu = (channel_id, msg_id) => {
 
 }
 
+// Function that reacts to a message
+const react_to_msg = (channel_id, msg_id, reaction) => {
+    let data = {
+        'react': reaction
+    };
+
+    fetch(url + "/message/react/" + channel_id + "/" + msg_id, {
+        method: "POST",
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+        .then(res => {
+            if (res.ok) {
+                return res.json();
+            } else {
+                throw new Error(`Error: ${res.status}`);
+            }
+        })
+        .then (data => {
+            console.log('Success:', data);
+            // This data variable contains nothing
+            // just redisplay the entire channel messages
+            display_channel_msgs(channel_id, view_pinned_only);
+        })
+        .catch (err => {
+            console.log('Error:', err);
+        })
+}
+
+// Function that unreacts to a message
+const unreact_to_msg = (channel_id, msg_id, reaction) => {
+    let data = {
+        'react': reaction
+    };
+
+    fetch(url + "/message/unreact/" + channel_id + "/" + msg_id, {
+        method: "POST",
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+        .then(res => {
+            if (res.ok) {
+                return res.json();
+            } else {
+                throw new Error(`Error: ${res.status}`);
+            }
+        })
+        .then (data => {
+            console.log('Success:', data);
+            // This data variable contains nothing
+            // just redisplay the entire channel messages
+            display_channel_msgs(channel_id, view_pinned_only);
+        })
+        .catch (err => {
+            console.log('Error:', err);
+        })
+}
+
 // Helper function that creates msg bubble
 const create_message_bubble = (channel_id, msg) => {
     // Each message bubble contains ...
