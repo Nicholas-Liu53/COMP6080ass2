@@ -1360,6 +1360,23 @@ const unreact_to_msg = (channel_id, msg_id, reaction) => {
         })
 }
 
+// Function that toggles the user's own reaction
+const toggle_react = ( channel_id, msg_data, reaction) => {
+    let reactFound = false;
+    for (var react in msg_data["reacts"]) {
+        if (react["user"] == user_id) {
+            reactFound = true;
+            break;
+        }
+    }
+
+    if (reactFound) {
+
+    } else {
+        
+    }
+}
+
 // Helper function that creates msg bubble
 const create_message_bubble = (channel_id, msg) => {
     // Each message bubble contains ...
@@ -1483,98 +1500,31 @@ const create_message_bubble = (channel_id, msg) => {
         popup.className = "msg-utility-popup";
     });
 
-    /*
+
     // Reactions
-    //! This part's time complexity is scuffed
-    //! so just comment it out when testing other stuff
-    let msg_reactions = document.createElement("div");
+    // There will be two parts to this section:
+    //      1. Creating the reaction menu popup
+    //      2. Letting reaction bubbles to appear on the bottom
+    // The design for this is inspired by discord
 
-    let string_reaction_bubble = document.createElement("div");
-
-    string_reaction_bubble.className = "string-reaction-bubble";
-    //! Insert emoji icon for bubble
-    let string_reaction_popup = document.createElement("span");
-    string_reaction_popup.textContent = "No reacts";
-
-    let boolean_reaction_bubble = document.createElement("div");
-    //! Insert emoji icon for bubble
-    boolean_reaction_bubble.className = "boolean-reaction-bubble";
-    let boolean_reaction_popup = document.createElement("span");
-    boolean_reaction_popup.textContent = "No reacts";
-
-    let number_reaction_bubble = document.createElement("div");
-    //! Insert emoji icon for bubble
-    number_reaction_bubble.className = "number-reaction-bubble";
-    let number_reaction_popup = document.createElement("span");
-    number_reaction_popup.textContent = "No reacts";
-
-    let react_string_counter = 0;
-    let react_boolean_counter = 0;
-    let react_number_counter = 0;
-
-    for (var reaction of msg["react"]) {
-        
-        // get the name of the reactor
-        var reactorUserName;
-        get_user_details(reaction["user"]).then((inner_data) => {
-            reactorUserName = inner_data["name"];
-        });
-
-        if (reaction["react"] === "string") {
-            if (react_string_counter == 0) {
-                string_reaction_popup.textContent = reactorUserName;
-            } else if (react_string_counter == 1) {
-                string_reaction_popup.textContent = reactorUserName + " and " + string_reaction_popup.textContent;
-            } else {
-                string_reaction_popup.textContent = reactorUserName + ", " + string_reaction_popup.textContent;
-            }
-            react_string_counter++;
-        }
-        if (reaction["react"] === "boolean") {
-            if (react_boolean_counter == 0) {
-                boolean_reaction_popup.textContent = reactorUserName;
-            } else if (react_boolean_counter == 1) {
-                boolean_reaction_popup.textContent = reactorUserName + " and " + boolean_reaction_popup.textContent;
-            } else {
-                boolean_reaction_popup.textContent = reactorUserName + ", " + boolean_reaction_popup.textContent;
-            }
-            react_boolean_counter++;
-        }
-        if (reaction["react"] === "number") {
-            if (react_number_counter == 0) {
-                number_reaction_popup.textContent = reactorUserName;
-            } else if (react_number_counter == 1) {
-                number_reaction_popup.textContent = reactorUserName + " and " + number_reaction_popup.textContent;
-            } else {
-                number_reaction_popup.textContent = reactorUserName + ", " + number_reaction_popup.textContent;
-            }
-            react_number_counter++;
-        }
-    }
-
-    let string_reaction_count = document.createElement("h6");
-    string_reaction_count.textContent = String(react_string_counter);
-    string_reaction_bubble.appendChild(string_reaction_count);
-    string_reaction_bubble.appendChild(string_reaction_popup);
-
-    let boolean_reaction_count = document.createElement("h6");
-    boolean_reaction_count.textContent = String(react_boolean_counter);
-    boolean_reaction_bubble.appendChild(boolean_reaction_count);
-    boolean_reaction_bubble.appendChild(boolean_reaction_popup);
+    // There will be 3 types of reacts:
+    //      1. ✅ "tick"
+    //      2. 💜 "heart"
+    //      3. 🚫 "no"
     
-    let number_reaction_count = document.createElement("h6");
-    number_reaction_count.textContent = String(react_number_counter);
-    number_reaction_bubble.appendChild(number_reaction_count);
-    number_reaction_bubble.appendChild(number_reaction_popup);
+    let reaction_menu_popup = document.createElement("div");
+    reaction_menu_popup.className = "reaction-menu-popup";
+    reaction_menu_popup.id = "reaction-menu-popup-for-" + msg_bubble.id;
+    let tick_button = document.createElement("button");
+    tick_button.className = "react-button tick-button";
+    tick_button.id = "tick-button-for-" + msg_bubble.id;
 
-    msg_reactions.appendChild(string_reaction_bubble);
-    msg_reactions.appendChild(boolean_reaction_bubble);
-    msg_reactions.appendChild(number_reaction_bubble);
+
+    let msg_reactions = document.createElement("div");
+    
 
     msg_bubble.appendChild(msg_reactions);
 
-    msg_page.appendChild(msg_bubble);
-    */
    return msg_bubble;
 }
 
