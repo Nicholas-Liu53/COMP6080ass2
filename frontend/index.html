@@ -25,6 +25,24 @@
     #channel-screen {
       display: none;
     }
+    #edit-channel-button {
+      display: none;
+    }
+    #leave-channel-button {
+      display: none;
+    }
+    #join-channel-screen {
+      display: none;
+    }
+    #edit-channel-bubble {
+      display: none;
+    }
+    #profile-bubble {
+      display: none;
+    }
+    #edit-profile-bubble {
+      display: none;
+    }
     </style>
 </head>
 
@@ -86,6 +104,9 @@
       <section id="main-top-row">
         <b id="welcome-banner" >Welcome to Slackr, </b>
         <div id="buttons-and-links-at-end">
+          <button name="edit-profile-button" id="edit-profile-button">Edit Profile</button>
+          <button name="edit-channel-button" id="edit-channel-button">Edit Channel</button>
+          <button name="leave-channel-button" id="leave-channel-button">Leave Channel</button>
           <button name="signout-button" id="signout-button">Sign Out</button>
         </div>
       </section>
@@ -109,6 +130,10 @@
               <button name="send-msg-button" id="send-msg-button">Send</button>
             </div>
           </div>
+          <div id="join-channel-screen">
+            <h2 id="you-are-not-member"> You are not a member of this channel.</h2>
+            <button name="join-channel-button" id="join-channel-button">Join channel</button>
+          </div>
         <div id="new-channel-bubble">
           <form name="new_channel_form">
             <label for="new-channel-name">Channel name</label><br>
@@ -124,6 +149,57 @@
           <div>
             <button name="close-new-channel-form-button" id="close-new-channel-form-button">Cancel</button>
             <button name="create-channel-button" id="create-channel-button">Create</button>
+          </div>
+        </div>
+        <div id="edit-channel-bubble">
+          <form name="edit_channel_form">
+            <label for="new-channel-name-edit">New Channel name</label><br>
+            <input type="text" id="new-channel-name-edit" name="new_channel_name_edit">
+            <br><br>
+            <label for="new-channel-desc-edit">New Description</label><br>
+            <input type="text" id="new-channel-desc-edit" name="new_channel_desc_edit">
+          </form>
+          <br><br>
+          <div>
+            <button name="close-edit-channel-form-button" id="close-edit-channel-form-button">Cancel</button>
+            <button name="save-edit-channel-button" id="save-edit-channel-button">Save</button>
+          </div>
+        </div>
+        <div id="profile-bubble">
+          <img id="profile-photo" src="">
+          <h3 id="profile-name"></h3>
+          <h5 id="profile-email"></h5>
+          <h6 id="profile-bio"></h6>
+          <button id="close-profile-button">Close</button>
+        </div>
+        <div id="edit-profile-bubble">
+          <form name="edit_profile_form">
+            <img id="preedit-profile-photo" src=""><br>
+            <label for="postedit-profile-photo-src">New Profile Photo File Location</label><br>
+            <input type="text" id="postedit-profile-photo-src" name="postedit_profile_photo_src">
+            <br><br>
+            <h3 id="preedit-profile-name"></h3>
+            <label for="postedit-profile-name">New Profile Name</label><br>
+            <input type="text" id="postedit-profile-name" name="postedit_profile_name">
+            <br><br>
+            <h5 id="preedit-profile-email"></h5>
+            <label for="postedit-profile-email">New Email</label><br>
+            <input type="text" id="postedit-profile-email" name="postedit_profile_email">
+            <br><br>
+            <label for="postedit-profile-password">New Password (Enter same password if unchanged)</label><br>
+            <input type="password" id="postedit-profile-password" name="postedit_profile_password">
+            <br><br>
+            <label for="postedit-profile-password-conf" id="postedit-profile-password-conf-label">Confirm Password</label><br>
+            <input type="password" id="postedit-profile-password-conf" name="postedit_profile_password_conf">
+            <br><br>
+            <h6 id="preedit-profile-bio"></h6>
+            <label for="postedit-profile-bio">New Bio</label><br>
+            <input type="text" id="postedit-profile-bio" name="postedit_profile_bio">
+            <br><br>
+          </form>
+          <div>
+            <button id="save-edit-profile-button">Save</button>
+            <button id="close-edit-profile-button">Close</button>
           </div>
         </div>
       </section>

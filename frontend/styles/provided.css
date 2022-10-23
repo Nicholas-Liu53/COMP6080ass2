@@ -151,6 +151,21 @@ textarea {
     text-align: center;
 }
 
+#join-channel-screen {
+    flex-direction: column;
+    align-items: center;
+    margin: 1em 1em 1em 1em;
+}
+
+#you-are-not-member {
+    font-size: 1em;
+    text-align: center;
+}
+
+#join-channel-button {
+    width: 100%;
+}
+
 #channel-screen {
     background-color: white;
     width: 80vw;
@@ -204,6 +219,12 @@ textarea {
 }
 
 #new-channel-bubble {
+    background: white;
+    width: 80vw;
+    padding: 7px;
+}
+
+#edit-channel-bubble {
     background: white;
     width: 80vw;
     padding: 7px;
@@ -393,4 +414,62 @@ textarea {
 .react-bubble {
     border-radius: 8px;
     margin: 5px -1px 6px 5px;
+}
+
+/*********************************************************************/
+/**                          Milestone 4                            **/
+/*********************************************************************/
+
+#profile-bubble {
+    height: 631.13px;
+    width: 80vw;
+    flex-direction: column;
+    align-items: center;
+    overflow: scroll;
+    overflow-x: hidden;
+    overflow-y: visible;
+}
+
+#profile-photo {
+    height: 10vh; 
+    margin-top: 1em;
+}
+
+#profile-name {
+    margin: 1em 1em 1em 1em;
+}
+
+#profile-email {
+    margin: 1em 1em 1em 1em;
+}
+
+#profile-bio {
+    outline: 1px solid gray;
+}
+
+#edit-profile-bubble {
+    height: 631.13px;
+    width: 80vw;
+    flex-direction: column;
+    align-items: center;
+    overflow: scroll;
+    overflow-x: hidden;
+    overflow-y: visible;
+}
+
+#preedit-profile-photo {
+    height: 10vh; 
+    margin-top: 1em;
+}
+
+#preedit-profile-name {
+    margin: 1em 1em 1em 1em;
+}
+
+#preedit-profile-email {
+    margin: 1em 1em 1em 1em;
+}
+
+#preedit-profile-bio {
+    outline: 1px solid gray;
 }

@@ -18,6 +18,8 @@ var user_id;
 let login_form = document.forms.login_form;
 let signup_form = document.forms.signup_form;
 let new_channel_form = document.forms.new_channel_form;
+let edit_channel_form = document.forms.edit_channel_form;
+let edit_profile_form = document.forms.edit_profile_form;
 
 //* Error handling variables *//
 let prev_display_bubble = document.getElementById("login-bubble");
@@ -308,6 +310,11 @@ const display_mainpage = () => {
     signup_bubble.style.display = "none";
     signup_form.reset();
 
+    let edit_profile_button = document.getElementById("edit-profile-button");
+    edit_profile_button.onclick = (() => {
+        display_edit_profile_form();
+    });
+
     // Do the channel banner
     var users_name;
     fetch(url + "/user/" + user_id, {
@@ -374,6 +381,7 @@ const display_mainpage = () => {
                     // Create heading
                     let channel_name = document.createElement("h4");
                     channel_name.className = "channel-name";
+                    channel_name.id = "channel-heading-name-for-" + channel["id"];
                     channel_name.textContent = channel["name"];
                     channel_heading.appendChild(channel_name);
                     // Show channel details (that's not desc)
@@ -383,6 +391,7 @@ const display_mainpage = () => {
                     channel_details.textContent = channel_details.textContent + " channel - Created ";
                     let channel_desc = document.createElement("p");
                     channel_desc.className = "channel-desc";
+                    channel_desc.id = "channel-desc-for-" + channel["id"];
                     // Creator?
                     get_user_details(channel["creator"]).then((data_layer_3) => { 
                         channel_details.textContent = channel_details.textContent + " by " + data_layer_3["name"]; 
@@ -474,6 +483,12 @@ let open_channel = (channel_id) => {
     // If new channel form is open, close it
     let new_channel_bubble = document.getElementById("new-channel-bubble");
     new_channel_bubble.style.display = "none";
+    // If edit channel form is open, close it
+    let edit_channel_bubble = document.getElementById("edit-channel-bubble");
+    edit_channel_bubble.style.display = "none";
+    // Hide the profile bubble xd
+    let profile_bubble = document.getElementById("profile-bubble");
+    profile_bubble.style.display = "none";
 
     console.log("open_channel be opening: ", channel_id);
 
@@ -489,7 +504,9 @@ let open_channel = (channel_id) => {
         // Get pure id of channel_tab
         let pure_id = channel_tab.id.replace("tab-for-", "");
         if (channel_tab.id == ("tab-for-" + channel_id)) {
-            if (channel_tab.className.includes("-active")) continue;
+            if (channel_tab.className.includes("-active")) {
+                continue;
+            }
             channel_tab.className += "-active";
             let tab_label = document.getElementById('tab-label-for-' + String(pure_id));
             tab_label.className += "-active";
@@ -516,40 +533,143 @@ let open_channel = (channel_id) => {
         }
     }
 
-    // Milestone 3 - Viewing pinned msgs only
-    view_pinned_only = false;
-    update_view_pinned_only_button();
-    let view_pinned_only_button = document.getElementById("view-pinned-only-button");
-    view_pinned_only_button.onclick = (() => toggle_view_pinned_only(channel_id));
+    // Check if user is even a member
+    let user_is_in_channel = false;
+    get_channels().then(data => {
+        let channel_found = false;
+        for (var channel of data["channels"]) {
+            if (channel["id"] == channel_id) {
+                channel_found = true;
+                user_is_in_channel = channel["members"].includes(user_id);
+                // user_is_in_channel = false;
+                break;
+            }
+        }
 
-    // Milestone 3 - Display channel msgs
-    display_channel_msgs(channel_id, view_pinned_only);
+        if (!channel_found) {
+            throw new Error(`Error: invalid channel_id wat`);
+        }
 
-    // Milestone 3 - Update send button for this channel
-    update_send_button(channel_id);
+        // If user is in the channel, display the channel_screen
+        if (user_is_in_channel) {
+            // Change the onclicks of edit channel and leave channel buttons
+            let edit_channel_button = document.getElementById("edit-channel-button");
+            let leave_channel_button = document.getElementById("leave-channel-button");
 
-    // Milestone 3 - Clear the message box
-    document.getElementById("message-box").value = "";
+            edit_channel_button.onclick = (() => {
+                display_edit_channel_form(channel_id);
+            });
+            leave_channel_button.onclick = (() => {
+                fetch(url + "/channel/" + channel_id + "/leave", {
+                    method: "POST",
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                    .then(res => {
+                        if (res.ok) {
+                            return res.json();
+                        } else {
+                            throw new Error(`Error: ${res.status}`);
+                        }
+                    })
+                    .then(data => {
+                        // Data literally contains nothing
+                        let channel_screen = document.getElementById("channel-screen");
+                        channel_screen.style.display = "none"; 
+                        open_channel(channel_id);
+                    })
+                    .catch(err => {
+                        console.log('Error:', err);
+                    })
+            });
 
-    // Bind ENTER key to send button
-    // Remove old binds
-    let old_message_box = document.getElementById("message-box");
-    let new_message_box = old_message_box.cloneNode(true);
-    old_message_box.parentNode.replaceChild(new_message_box, old_message_box);
-    // Chuck in new bind
-    new_message_box.addEventListener('keydown', (event) => {
-        if (event.keyCode === 13) {
-            send_message(channel_id);
+            edit_channel_button.style.display = "block";
+            leave_channel_button.style.display = "block";
+
+            // Milestone 3 - Viewing pinned msgs only
+            view_pinned_only = false;
+            update_view_pinned_only_button();
+            let view_pinned_only_button = document.getElementById("view-pinned-only-button");
+            view_pinned_only_button.onclick = (() => toggle_view_pinned_only(channel_id));
+
+            // Milestone 3 - Display channel msgs
+            display_channel_msgs(channel_id, view_pinned_only);
+
+            // Milestone 3 - Update send button for this channel
+            update_send_button(channel_id);
+
+            // Milestone 3 - Clear the message box
+            document.getElementById("message-box").value = "";
+
+            // Bind ENTER key to send button
+            // Remove old binds
+            let old_message_box = document.getElementById("message-box");
+            let new_message_box = old_message_box.cloneNode(true);
+            old_message_box.parentNode.replaceChild(new_message_box, old_message_box);
+            // Chuck in new bind
+            new_message_box.addEventListener('keydown', (event) => {
+                if (event.keyCode === 13) {
+                    send_message(channel_id);
+                }
+            });
+
+            let channel_screen = document.getElementById("channel-screen");
+            channel_screen.style.display = "flex";
+        
+        // Otherwise, display the join-channel-screen
+        } else {
+            // Before doing so, hide the edit channel and leave channel buttons
+            document.getElementById("edit-channel-button").style.display = "none";
+            document.getElementById("leave-channel-button").style.display = "none";
+
+            let join_channel_button = document.getElementById("join-channel-button");
+
+            join_channel_button.onclick = (() => {
+                fetch(url + "/channel/" + channel_id + "/join", {
+                    method: "POST",
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                    .then(res => {
+                        if (res.ok) {
+                            return res.json();
+                        } else {
+                            throw new Error(`Error: ${res.status}`);
+                        }
+                    })
+                    .then(data_inner => {
+                        // Data literally contains nothing
+                        let join_channel_screen = document.getElementById("join-channel-screen");
+                        join_channel_screen.style.display = "none";
+                        open_channel(channel_id);
+                    })
+                    .catch(err => {
+                        console.log('Error:', err);
+                    });
+            });
+
+            let join_channel_screen = document.getElementById("join-channel-screen");
+            join_channel_screen.style.display = "flex";
         }
     });
-
-    const channel_screen = document.getElementById("channel-screen");
-    channel_screen.style.display = "flex";
+    
 }
 
 // Tab that displays a create channel bubble
 const new_channel_tab = document.getElementById("create-channel-tab");
 const display_new_channel_form = () => {
+    // Hide the edit channel form xd
+    const edit_channel_bubble = document.getElementById("edit-channel-bubble");
+    edit_channel_bubble.style.display = "none";
+
+    // Hide the profile bubble xd
+    let profile_bubble = document.getElementById("profile-bubble");
+    profile_bubble.style.display = "none";
+
     // Unpress the tabs
     let channel_tabs_wrapper = document.getElementById('channel-tabs-wrapper');
     // console.log("Tabs LOOP!!");
@@ -647,7 +767,6 @@ const create_channel = () => {
             new_channel_desc = "";
             const channel_screen = document.getElementById("channel-screen");
             channel_screen.style.display = "flex";
-            display_mainpage();
             open_channel(data['channelId']);
         })
         .catch(err =>  {
@@ -665,6 +784,89 @@ let close_new_channel_form = () => {
     channel_screen.style.display = "flex";
 }
 close_new_channel_form_button.onclick = close_new_channel_form;
+
+//* Edit channel form function
+const display_edit_channel_form = (channel_id) => {
+    const channel_screen = document.getElementById("channel-screen");
+    const edit_channel_bubble = document.getElementById("edit-channel-bubble");
+    
+    get_channels().then(data => {
+        for (var channel of data["channels"]) {
+            if (channel["id"] == channel_id) {
+                // console.log("I made it here");
+                let new_channel_name_edit = edit_channel_form.new_channel_name_edit;
+                new_channel_name_edit.addEventListener('change', (event) => {
+                    new_channel_name_edit = event.target.value;
+                });
+
+                let new_channel_desc_edit = edit_channel_form.new_channel_desc_edit;
+                new_channel_desc_edit.addEventListener('change', (event) => {
+                    new_channel_desc_edit = event.target.value;
+                });
+
+                let close_edit_channel_form_button = document.getElementById("close-edit-channel-form-button");
+                close_edit_channel_form_button.onclick = (() => {
+                    edit_channel_bubble.style.display = "none";
+                    channel_screen.style.display = "block";
+                    edit_channel_form.reset();
+                });
+
+                let save_edit_channel_button = document.getElementById("save-edit-channel-button");
+                save_edit_channel_button.onclick = (() => {
+                    
+                    if (new_channel_name_edit == edit_channel_form.new_channel_name_edit || new_channel_name_edit == "") {
+                        new_channel_name_edit = channel["name"];
+                    }
+
+                    if (new_channel_desc_edit == edit_channel_form.new_channel_desc_edit || new_channel_desc_edit == "") {
+                        new_channel_desc_edit = channel["description"];
+                    }
+
+                    let request_data = {
+                        "name": new_channel_name_edit,
+                        "description": new_channel_desc_edit
+                    };
+
+                    fetch(url + "/channel/" + channel_id, {
+                        method: "PUT",
+                        headers: {
+                            'Authorization': 'Bearer ' + token,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(request_data)
+                    })
+                        .then(res => {
+                            if (res.ok) {
+                                return res.json();
+                            } else {
+                                throw new Error(`Error: ${res.status}`);
+                            }
+                        })
+                        .then(inner_data => {
+                            edit_channel_bubble.style.display = "none";
+                            edit_channel_form.reset();
+                            // Gotta update the banner/heading of the channel
+                            let channel_heading_name = document.getElementById("channel-heading-name-for-" + String(channel_id));
+                            channel_heading_name.textContent = new_channel_name_edit;
+                            let channel_heading_desc = document.getElementById("channel-desc-for-" + String(channel_id));
+                            channel_heading_desc.textContent = new_channel_desc_edit;
+                            // This updates the tabs
+                            display_mainpage();
+                            open_channel(channel_id);
+                        })
+                        .catch(err => {
+                            console.log('Error:', err);
+                        })
+                });
+                
+                channel_screen.style.display = "none";
+                edit_channel_bubble.style.display = "block";
+
+                break;
+            }
+        }
+    });
+}
 
 // Helper function that finds details about a user
 const get_user_details = (user_id_arg) => {
@@ -749,6 +951,10 @@ const get_channels = () => {
         })
         .then(data => {
             // console.log('Success:', data);
+            let data_dict = {
+                'channels': data["channels"]
+            };
+            return data_dict;
         })
         .catch(err => {
             // console.log("Error: ", err);
@@ -1069,7 +1275,7 @@ const send_message = (channel_id) => {
     // Clear the textbox when sending
     document.getElementById("message-box").value = "";
 
-    fetch(url + /message/ + channel_id, {
+    fetch(url + "/message/" + channel_id, {
         method: "POST",
         headers: {
             'Authorization': 'Bearer ' + token,
@@ -1410,6 +1616,17 @@ const create_message_bubble = (channel_id, msg) => {
         sender_dp.src = inner_data["image"] ? inner_data["image"] : "./src/images/no_dp.svg";
         sender_name.textContent = inner_data["name"];
     });
+    sender_name.addEventListener('mouseover', () => {
+        sender_name.style.textDecoration = "underline";
+        console.log("Now they always say, \"Congratulations\"");
+    });
+    sender_name.addEventListener('mouseout', () => {
+        sender_name.style.textDecoration = "";
+    });
+    sender_name.addEventListener('click', () => {
+        view_profile(msg["sender"]);
+    });
+
     msg_details.appendChild(sender_dp);
     msg_details.appendChild(sender_name);
 
@@ -1577,11 +1794,11 @@ const create_message_bubble = (channel_id, msg) => {
     for (var reaction of msg['reacts']) {
         if (reaction['react'] == "✅") {
             tick_counter++;
-            console.log("hold up --", reaction['user'], String(user_id));
+            // console.log("hold up --", reaction['user'], String(user_id));
             if (reaction['user'] === user_id) {
                 user_ticked = true;
             }
-            console.log('user_ticked: ' + user_ticked);
+            // console.log('user_ticked: ' + user_ticked);
         }
         if (reaction['react'] == "💜") {
             heart_counter++;
@@ -1642,4 +1859,176 @@ const create_message_bubble = (channel_id, msg) => {
 const load_msg_bubble_onto_page = (msg_bubble, msg_page) => {
 
     msg_page.appendChild(msg_bubble);
+}
+
+//********************************************************************/
+//**                         Milestone 4                            **/
+//********************************************************************/
+
+// Function that views a person's profile when you click on it
+const view_profile = (id_of_user) => {
+    get_user_details(id_of_user).then(data => {
+        
+        let channel_screen = document.getElementById("channel-screen");
+        let profile_bubble = document.getElementById("profile-bubble");
+        let edit_channel_button = document.getElementById("edit-channel-button");
+        let leave_channel_button = document.getElementById("leave-channel-button");
+
+        edit_channel_button.style.display = "none";
+        leave_channel_button.style.display = "none";
+        channel_screen.style.display = "none";
+        
+        let profile_photo = document.getElementById("profile-photo");
+        profile_photo.src = data['image'] ? data['image'] : "./src/images/no_dp.svg";
+        
+        let profile_name = document.getElementById('profile-name');
+        profile_name.textContent = data["name"];
+        
+        let profile_email = document.getElementById('profile-email');
+        profile_email.textContent = data["email"];
+        
+        let profile_bio = document.getElementById('profile-bio');
+        profile_bio.textContent = data["bio"] ? data["bio"] : "";
+        
+        let close_profile_button = document.getElementById("close-profile-button");
+        close_profile_button.onclick = (() => {
+            profile_bubble.style.display = "none";
+            edit_channel_button.style.display = "block";
+            leave_channel_button.style.display = "block";
+            channel_screen.style.display = "flex";
+        });
+        
+        profile_bubble.style.display = "flex";
+    });
+}
+
+// Function that views a edit profile form
+const display_edit_profile_form = () => {
+    get_user_details(user_id).then(data => {
+
+        let channel_screen = document.getElementById("channel-screen");
+        let edit_profile_bubble = document.getElementById("edit-profile-bubble");
+        let edit_channel_button = document.getElementById("edit-channel-button");
+        let leave_channel_button = document.getElementById("leave-channel-button");
+
+        edit_channel_button.style.display = "none";
+        leave_channel_button.style.display = "none";
+        channel_screen.style.display = "none";
+        
+        let preedit_profile_photo = document.getElementById("preedit-profile-photo");
+        preedit_profile_photo.src = data['image'] ? data['image'] : "./src/images/no_dp.svg";
+        
+        let preedit_profile_name = document.getElementById('preedit-profile-name');
+        preedit_profile_name.textContent = data["name"];
+        
+        let preedit_profile_email = document.getElementById('preedit-profile-email');
+        preedit_profile_email.textContent = data["email"];
+        
+        let preedit_profile_bio = document.getElementById('preedit-profile-bio');
+        preedit_profile_bio.textContent = data["bio"] ? data["bio"] : "";
+        
+        let postedit_profile_photo_src = edit_profile_form.postedit_profile_photo_src;
+        postedit_profile_photo_src.addEventListener('change', (event) => {
+            postedit_profile_photo_src = event.target.value;
+        });
+        postedit_profile_photo_src.value = data['image'] ? data['image'] : "";
+        
+        let postedit_profile_name = edit_profile_form.postedit_profile_name;
+        postedit_profile_name.addEventListener('change', (event) => {
+            postedit_profile_name = event.target.value;
+        });
+        postedit_profile_name.value = data["name"];
+
+        let postedit_profile_email = edit_profile_form.postedit_profile_email;
+        postedit_profile_email.addEventListener('change', (event) => {
+            postedit_profile_email = event.target.value;
+        });
+        postedit_profile_email.value = data["email"];
+
+        let postedit_profile_password = edit_profile_form.postedit_profile_password;
+        postedit_profile_password.addEventListener('change', (event) => {
+            postedit_profile_password = event.target.value;
+        });
+
+        let postedit_profile_password_conf = edit_profile_form.postedit_profile_password_conf;
+        postedit_profile_password.addEventListener('change', (event) => {
+            postedit_profile_password_conf = event.target.value;
+        });
+
+        let postedit_profile_bio = edit_profile_form.postedit_profile_bio;
+        postedit_profile_bio.addEventListener('change', (event) => {
+            postedit_profile_bio = event.target.value;
+        });
+        postedit_profile_bio.value = data["bio"] ? data["bio"] : "";
+
+        document.getElementById("save-edit-profile-button").onclick = ((event) => {
+            
+            if (postedit_profile_password != postedit_profile_password_conf) {
+                let label = document.getElementById("postedit-profile-password-conf-label");
+                label.textContent += " PASSWORDS DON'T MATCH!";
+                label.color = "red";
+                return;
+            } else {
+                let label = document.getElementById("postedit-profile-password-conf-label");
+                label.textContent = label.textContent.replace(" PASSWORDS DON'T MATCH!", "");
+                label.color = "black";
+            }
+
+            if (postedit_profile_photo_src == edit_profile_form.postedit_profile_photo_src) {
+                postedit_profile_photo_src = data["image"];
+            } else if (postedit_profile_photo_src == "") {
+                postedit_profile_photo_src = null;
+            }
+            if (postedit_profile_name == edit_profile_form.postedit_profile_name || postedit_profile_name == "") {
+                postedit_profile_name = data["name"];
+            }
+            if (postedit_profile_email == edit_profile_form.postedit_profile_email || postedit_profile_email == "") {
+                postedit_profile_email = data["email"];
+            }
+            if (postedit_profile_bio == edit_profile_form.postedit_profile_bio) {
+                postedit_profile_bio = data["bio"] ? data["bio"] : "";
+            } 
+            
+            let request_data = {
+                "image": postedit_profile_photo_src,
+                "name": postedit_profile_name,
+                "email": postedit_profile_email,
+                "password": postedit_profile_password,
+                "bio": postedit_profile_bio
+            };
+
+            fetch(url + "/user", {
+
+                method: "PUT",
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json'
+                }, 
+                body: JSON.stringify(request_data)
+            })
+                .then(res => {
+                    if (res.ok) {
+                        return res.json();
+                    } else {
+                        throw new Error(`Error: ${res.status}`);
+                    }
+                })
+                .then(inner_data => {
+                    edit_profile_form.reset();
+                    edit_profile_bubble.style.display = "none";
+                    display_mainpage();
+                })
+                .catch(err => {
+                    console.log('Error:', err);
+                })
+        });
+
+        document.getElementById("close-edit-profile-button").onclick = ((event) => {
+            edit_profile_form.reset();
+            edit_profile_bubble.style.display = "none";
+        });
+
+        edit_profile_bubble.style.display = "flex";
+
+    });
 }
