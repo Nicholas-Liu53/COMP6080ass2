@@ -1361,19 +1361,22 @@ const unreact_to_msg = (channel_id, msg_id, reaction) => {
 }
 
 // Function that toggles the user's own reaction
-const toggle_react = ( channel_id, msg_data, reaction) => {
+const toggle_react = (channel_id, msg_data, reaction) => {
     let reactFound = false;
-    for (var react in msg_data["reacts"]) {
-        if (react["user"] == user_id) {
+    for (var react of msg_data["reacts"]) {
+        if (react["user"] == user_id && react["react"] == reaction) {
             reactFound = true;
             break;
         }
     }
 
+    // If previously reacted, then unreact
     if (reactFound) {
+        unreact_to_msg(channel_id, msg_data["id"], reaction);
 
+    // Otherwise, react
     } else {
-        
+        react_to_msg(channel_id, msg_data["id"], reaction);
     }
 }
 
@@ -1490,6 +1493,7 @@ const create_message_bubble = (channel_id, msg) => {
     msg_utility_popup.appendChild(delete_button);
 
     msg_bubble.appendChild(msg_utility_popup);
+
     // Animation things for popup to appear
     msg_bubble.addEventListener('mouseenter', () => {
         let popup = document.getElementById("msg-utility-popup-for-" + msg_bubble.id);
@@ -1507,23 +1511,129 @@ const create_message_bubble = (channel_id, msg) => {
     //      2. Letting reaction bubbles to appear on the bottom
     // The design for this is inspired by discord
 
+    // 1. Creating the reaction menu popup
+    let reaction_menu_popup = document.createElement("span");
+    reaction_menu_popup.className = "reaction-menu-popup";
+    reaction_menu_popup.id = "reaction-menu-popup-for-" + msg_bubble.id;
+
     // There will be 3 types of reacts:
     //      1. ✅ "tick"
     //      2. 💜 "heart"
     //      3. 🚫 "no"
     
-    let reaction_menu_popup = document.createElement("div");
-    reaction_menu_popup.className = "reaction-menu-popup";
-    reaction_menu_popup.id = "reaction-menu-popup-for-" + msg_bubble.id;
+    // 1. ✅ "tick"
     let tick_button = document.createElement("button");
     tick_button.className = "react-button tick-button";
     tick_button.id = "tick-button-for-" + msg_bubble.id;
+    tick_button.textContent = "✅"; 
+    tick_button.onclick = (() => {
+        toggle_react(channel_id, msg, "✅");
+    });
+    reaction_menu_popup.appendChild(tick_button);
 
+    // 2. 💜 "heart"
+    let heart_button = document.createElement("button");
+    heart_button.className = "react-button heart-button";
+    heart_button.id = "heart-button-for-" + msg_bubble.id;
+    heart_button.textContent = "💜"; 
+    heart_button.onclick = (() => {
+        toggle_react(channel_id, msg, "💜");
+    });
+    reaction_menu_popup.appendChild(heart_button);
 
+    // 3. 🚫 "no"
+    let no_button = document.createElement("button");
+    no_button.className = "react-button no-button";
+    no_button.id = "no-button-for-" + msg_bubble.id;
+    no_button.textContent = "🚫"; 
+    no_button.onclick = (() => {
+        toggle_react(channel_id, msg, "🚫");
+    });
+    reaction_menu_popup.appendChild(no_button);
+
+    msg_bubble.appendChild(reaction_menu_popup);
+
+    // Animation things for popup to appear
+    msg_bubble.addEventListener('mouseenter', () => {
+        let popup = document.getElementById("reaction-menu-popup-for-" + msg_bubble.id);
+        popup.className = "reaction-menu-popup-show";
+    });
+    msg_bubble.addEventListener('mouseleave', () => {
+        let popup = document.getElementById("reaction-menu-popup-for-" + msg_bubble.id);
+        popup.className = "reaction-menu-popup";
+    });
+
+    // Add a section for msg reactions to appear
     let msg_reactions = document.createElement("div");
     
+    let tick_counter = 0;
+    let heart_counter = 0;
+    let no_counter = 0;
 
-    msg_bubble.appendChild(msg_reactions);
+    let user_ticked = false;
+    let user_hearted = false;
+    let user_noed = false;
+
+    for (var reaction of msg['reacts']) {
+        if (reaction['react'] == "✅") {
+            tick_counter++;
+            console.log("hold up --", reaction['user'], String(user_id));
+            if (reaction['user'] === user_id) {
+                user_ticked = true;
+            }
+            console.log('user_ticked: ' + user_ticked);
+        }
+        if (reaction['react'] == "💜") {
+            heart_counter++;
+            if (reaction['user'] === user_id) {
+                user_hearted = true;
+            }
+        }
+        if (reaction['react'] == "🚫") {
+            no_counter++;
+            if (reaction['user'] === user_id) {
+                user_noed = true;
+            }
+        }
+    }
+
+    if (tick_counter) { 
+        let tick_bubble = document.createElement("button");
+        tick_bubble.classList = "react-bubble tick-bubble";
+        tick_bubble.id = "tick-bubble-for-" + msg_bubble.id;
+        tick_bubble.textContent = "✅ " + String(tick_counter);
+        tick_bubble.onclick = (() => {
+            toggle_react(channel_id, msg, "✅");
+        });
+        tick_bubble.style.backgroundColor = user_ticked ? "aqua" : "white";
+        msg_reactions.appendChild(tick_bubble);
+    }
+    if (heart_counter) { 
+        let heart_bubble = document.createElement("button");
+        heart_bubble.classList = "react-bubble heart-bubble";
+        heart_bubble.id = "heart-bubble-for-" + msg_bubble.id;
+        heart_bubble.textContent = "💜 " + String(heart_counter);
+        heart_bubble.onclick = (() => {
+            toggle_react(channel_id, msg, "💜");
+        });
+        heart_bubble.style.backgroundColor = user_hearted ? "aqua" : "white";
+        msg_reactions.appendChild(heart_bubble);
+    }
+    if (no_counter) { 
+        let no_bubble = document.createElement("button");
+        no_bubble.classList = "react-bubble no-bubble";
+        no_bubble.id = "no-bubble-for-" + msg_bubble.id;
+        no_bubble.textContent = "🚫 " + String(no_counter);
+        no_bubble.onclick = (() => {
+            toggle_react(channel_id, msg, "🚫");
+        });
+        no_bubble.style.backgroundColor = user_noed ? "aqua" : "white";
+        msg_reactions.appendChild(no_bubble);
+    }
+
+    if (tick_counter || heart_counter || no_counter) {
+        msg_bubble.appendChild(msg_reactions);
+    }
 
    return msg_bubble;
 }

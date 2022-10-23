@@ -352,3 +352,45 @@ textarea {
     width: 10px;
     height: 10px;
 }
+
+.react-button {
+    background-color: white;
+}
+
+.reaction-menu-popup {
+    display: inline-block;
+    position: absolute;
+    margin: 1em 1em 0em 61%;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    z-index: 1;
+    -ms-user-select: none;
+    user-select: none;
+    visibility: hidden;
+}
+
+.reaction-menu-popup-show {
+    display: inline-block;
+    position: absolute;
+    margin: 1em 1em 0em 61%;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    visibility: hidden;
+    z-index: 1;
+    visibility: visible;
+    -webkit-animation: fadeIn 0.2s;
+    animation: fadeIn 0.2s;
+}
+
+.react-button {
+    width: 26px;
+    text-align: center;
+    padding: 0 0 1px 0;
+}
+
+.react-bubble {
+    border-radius: 8px;
+    margin: 5px -1px 6px 5px;
+}
